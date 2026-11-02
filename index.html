@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>峡谷宝石战 · 消消乐对战</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== 标题界面 ===== -->
+  <div id="screen-title" class="screen">
+    <div class="title-box">
+      <div class="title-emblem">⚔️</div>
+      <h1>峡谷宝石战</h1>
+      <p class="subtitle">宝石消除对战 × 王者荣耀英雄</p>
+      <div class="rules-box">
+        <h3>玩法规则</h3>
+        <ul>
+          <li>交换相邻宝石，<b>3 消</b>同色宝石为英雄充能法力</li>
+          <li><b>💀 骷髅</b>匹配对敌方前排造成伤害（每颗伤害 = 前排英雄攻击力）</li>
+          <li><b>4 消</b>获得额外回合，<b>5 消</b>生成伤害翻倍的末日骷髅</li>
+          <li>法力足够后点击技能施放（施放技能消耗一次行动机会）</li>
+          <li>击败敌方全部英雄即获胜！</li>
+        </ul>
+      </div>
+      <button id="btn-start" class="btn big">开 始 冒 险</button>
+      <p class="credit">灵感来自《战神的挑战》(Gems of War / Puzzle Quest) · 英雄取材于《王者荣耀》· 粉丝自制 Demo</p>
+    </div>
+  </div>
+
+  <!-- ===== 选人界面 ===== -->
+  <div id="screen-select" class="screen hidden"></div>
+
+  <!-- ===== 战斗界面 ===== -->
+  <div id="screen-battle" class="screen hidden"></div>
+
+  <!-- ===== 结算界面 ===== -->
+  <div id="screen-result" class="screen hidden">
+    <div class="result-box">
+      <h1 id="result-title">胜利！</h1>
+      <p id="result-sub"></p>
+      <div class="result-btns">
+        <button id="btn-again" class="btn big">再 战 一 局</button>
+        <button id="btn-reselect" class="btn">重新选人</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script src="js/data.js"></script>
+<script src="js/board.js"></script>
+<script src="js/skills.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

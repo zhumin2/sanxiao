@@ -1,0 +1,261 @@
+/* ================= 峡谷宝石战 ================= */
+:root{
+  --gold:#d4af5a; --gold-dim:#8a7434;
+  --panel:#1a1726; --panel2:#241f33; --line:#3a3350;
+  --ink:#e8e0c8; --ink-dim:#b7a98a;
+  --cell:56px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  background:#0d0b14 radial-gradient(1200px 800px at 50% -10%, #2a1f3d 0%, #0d0b14 60%) fixed;
+  color:var(--ink);
+  font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+}
+#app{min-height:100vh;}
+.screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.hidden{display:none!important;}
+b{color:#ffd98a;}
+
+.btn{
+  display:inline-block;padding:10px 28px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--gold-dim);color:#ffe9b8;font-size:16px;letter-spacing:2px;
+  background:linear-gradient(#3a2f1c,#241c0f);
+  transition:filter .15s, transform .1s;
+}
+.btn:hover{filter:brightness(1.35);}
+.btn:active{transform:scale(.97);}
+.btn.big{padding:14px 46px;font-size:20px;}
+.btn.small{padding:4px 14px;font-size:13px;letter-spacing:1px;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ================= 标题 ================= */
+.title-box{text-align:center;max-width:780px;}
+.title-emblem{font-size:64px;filter:drop-shadow(0 0 18px rgba(212,175,90,.6));}
+h1{font-size:54px;letter-spacing:14px;color:var(--gold);
+  text-shadow:0 0 24px rgba(212,175,90,.45),0 2px 0 #000;}
+.subtitle{margin:10px 0 24px;color:var(--ink-dim);font-size:18px;letter-spacing:4px;}
+.rules-box{background:var(--panel);border:1px solid var(--gold-dim);border-radius:12px;
+  padding:18px 28px;text-align:left;margin-bottom:28px;}
+.rules-box h3{color:var(--gold);margin-bottom:10px;letter-spacing:3px;}
+.rules-box li{margin:6px 0 6px 18px;font-size:14px;color:#cfc4a6;}
+.credit{margin-top:22px;font-size:12px;color:#6f6650;}
+
+/* ================= 选人 ================= */
+.select-wrap{display:flex;gap:22px;align-items:flex-start;width:100%;max-width:1240px;}
+.select-left{flex:1;min-width:0;}
+.select-left h2,.select-right h3{color:var(--gold);letter-spacing:3px;margin-bottom:12px;}
+.roster-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.hero-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  padding:12px 8px;text-align:center;cursor:pointer;position:relative;
+  transition:transform .12s, border-color .12s, box-shadow .12s;
+}
+.hero-card:hover{transform:translateY(-3px);border-color:var(--gold-dim);}
+.hero-card.selected{border-color:#ffd700;box-shadow:0 0 14px rgba(255,215,0,.35);}
+.hero-card .badge{
+  position:absolute;top:-9px;left:-9px;width:24px;height:24px;border-radius:50%;
+  background:#ffd700;color:#241c0f;font-weight:800;font-size:14px;line-height:24px;
+  box-shadow:0 2px 6px rgba(0,0,0,.6);
+}
+.hc-portrait{
+  width:58px;height:58px;margin:0 auto 8px;border-radius:50%;font-size:32px;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid rgba(255,255,255,.25);box-shadow:0 3px 8px rgba(0,0,0,.5);
+}
+.hc-name{font-size:16px;font-weight:700;}
+.hc-role{font-size:12px;color:var(--ink-dim);margin:2px 0 6px;}
+.hc-stats{font-size:12px;color:#cfc4a6;}
+.hc-colors{margin-top:6px;display:flex;justify-content:center;gap:4px;}
+.color-dot{width:12px;height:12px;border-radius:50%;border:1px solid rgba(0,0,0,.5);}
+
+.select-right{width:330px;flex-shrink:0;display:flex;flex-direction:column;gap:14px;}
+.side-box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;}
+#hero-detail .hd-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+#hero-detail .hd-portrait{width:52px;height:52px;border-radius:50%;font-size:28px;
+  display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.25);}
+#hero-detail .hd-name{font-size:18px;font-weight:700;}
+#hero-detail .hd-title{font-size:12px;color:var(--ink-dim);}
+#hero-detail .hd-stats{font-size:13px;color:#cfc4a6;margin:6px 0;}
+#hero-detail .hd-skill{font-size:12.5px;padding:6px 0;border-top:1px dashed #3a3350;}
+#hero-detail .hd-skill b{color:#ffd98a;}
+#hero-detail .hd-skill .cost-line{color:#9fb6d8;}
+#hero-detail .hint{font-size:12px;color:var(--ink-dim);}
+#team-slots{display:flex;gap:8px;}
+.tslot{
+  flex:1;height:64px;border:1px dashed var(--line);border-radius:8px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:11px;color:#6f6650;background:#141020;
+}
+.tslot.filled{border-style:solid;border-color:var(--gold-dim);color:var(--ink);}
+.tslot .ts-emoji{font-size:24px;}
+.tslot .ts-pos{color:var(--gold);}
+.enemy-opt{
+  display:block;width:100%;text-align:left;padding:8px 12px;margin-top:6px;
+  background:#141020;border:1px solid var(--line);border-radius:8px;color:var(--ink);
+  cursor:pointer;font-size:14px;
+}
+.enemy-opt:hover{border-color:var(--gold-dim);}
+.enemy-opt.on{border-color:#ffd700;background:#2a2415;}
+.enemy-opt .eo-desc{font-size:12px;color:var(--ink-dim);}
+
+/* ================= 战斗 ================= */
+.battle-wrap{width:100%;max-width:1180px;}
+.battle-top{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  margin-bottom:10px;padding:8px 16px;background:var(--panel);
+  border:1px solid var(--line);border-radius:10px;
+}
+.battle-top .vs{color:var(--gold);font-size:17px;letter-spacing:2px;font-weight:700;}
+.battle-top .turninfo{font-size:16px;}
+.battle-top .turninfo.enemy{color:#ff8a7e;}
+.battle-top .turninfo.player{color:#8ade9a;}
+.battle-layout{display:flex;gap:14px;align-items:flex-start;justify-content:center;}
+.team-panel{
+  width:295px;flex-shrink:0;background:var(--panel);border:1px solid var(--line);
+  border-radius:12px;padding:10px;transition:box-shadow .2s,border-color .2s;
+  max-height:calc(100vh - 130px);overflow-y:auto;
+}
+.team-panel.active{border-color:#ffd700;box-shadow:0 0 18px rgba(255,215,0,.22);}
+.team-panel.enemy-side.active{border-color:#ff6a5e;box-shadow:0 0 18px rgba(255,90,70,.25);}
+.panel-title{text-align:center;color:var(--gold);letter-spacing:4px;font-size:15px;margin:2px 0 8px;}
+.hero-row{
+  display:flex;gap:9px;background:var(--panel2);border:1px solid var(--line);
+  border-radius:9px;padding:8px;margin-bottom:8px;position:relative;
+}
+.hero-row.dead{filter:grayscale(1) brightness(.55);}
+.hr-portrait{
+  width:48px;height:48px;border-radius:50%;flex-shrink:0;font-size:26px;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid rgba(255,255,255,.25);
+}
+.hr-main{flex:1;min-width:0;}
+.hr-name{font-size:14px;font-weight:700;display:flex;gap:6px;align-items:baseline;margin-bottom:3px;}
+.hr-name .hr-role{font-size:11px;color:var(--ink-dim);font-weight:400;}
+.hr-name .hr-atk{font-size:11px;color:#ffb0a6;margin-left:auto;font-weight:700;}
+.hr-name .hr-front{font-size:10px;color:#ffd700;border:1px solid var(--gold-dim);border-radius:4px;padding:0 3px;}
+.bar{position:relative;height:11px;background:#0e0c16;border:1px solid #000;border-radius:5px;margin-bottom:3px;overflow:hidden;}
+.bar .bar-fill{height:100%;border-radius:4px;transition:width .3s;}
+.bar span{position:absolute;inset:0;text-align:center;font-size:9px;line-height:11px;color:#fff;text-shadow:0 1px 1px #000;}
+.bar.hp .bar-fill{background:linear-gradient(#69d97e,#2e8c3c);}
+.bar.armor .bar-fill{background:linear-gradient(#f2d38a,#b8862d);}
+.mana-bars{display:flex;gap:3px;margin-top:2px;}
+.mana-bar{flex:1;height:8px;background:#0e0c16;border:1px solid #000;border-radius:4px;position:relative;overflow:hidden;}
+.mana-bar .mb-fill{height:100%;transition:width .3s;}
+.mana-bar span{position:absolute;inset:0;text-align:center;font-size:8px;line-height:8px;color:#fff;text-shadow:0 1px 1px #000;}
+.mb-red .mb-fill{background:linear-gradient(#ff8a6a,#c02a34);}
+.mb-blue .mb-fill{background:linear-gradient(#6fb6ff,#2456c8);}
+.mb-green .mb-fill{background:linear-gradient(#7ed98a,#1e8c3c);}
+.mb-yellow .mb-fill{background:linear-gradient(#ffe08a,#c8972e);}
+.mb-purple .mb-fill{background:linear-gradient(#c193ff,#6b21c9);}
+.hero-row .float{left:70%;}
+
+.skills-title{color:var(--gold);font-size:13px;letter-spacing:3px;margin:8px 0 6px;text-align:center;}
+.skill-btn{
+  display:flex;align-items:center;justify-content:space-between;gap:6px;
+  background:#141020;border:1px solid var(--line);border-left:3px solid var(--line);
+  border-radius:7px;padding:6px 9px;margin-bottom:5px;font-size:13px;
+}
+.skill-btn .sk-name{font-weight:700;}
+.skill-btn.enemy-skill{cursor:default;opacity:.92;}
+.skill-btn.ready{border-color:#5abf6a;border-left-color:#5abf6a;background:#1d2f1d;cursor:pointer;
+  animation:readyGlow 1.6s infinite;}
+@keyframes readyGlow{0%,100%{box-shadow:0 0 4px rgba(90,220,110,.25);}50%{box-shadow:0 0 14px rgba(90,220,110,.65);}}
+.locked .skill-btn{pointer-events:none;}
+.skill-hero-tag{font-size:11px;color:var(--ink-dim);margin:6px 0 3px;padding-left:2px;}
+/* 技能费用圆点 */
+.pip{
+  display:inline-flex;width:18px;height:18px;border-radius:50%;
+  align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;font-style:normal;
+  margin-left:3px;border:1px solid rgba(0,0,0,.5);text-shadow:0 1px 1px #000;
+}
+.pip.t-red{background:#c8352e;}
+.pip.t-blue{background:#2e6bc8;}
+.pip.t-green{background:#2e9c46;}
+.pip.t-yellow{background:#c8972e;}
+.pip.t-purple{background:#843ec8;}
+.sk-cost{display:flex;align-items:center;}
+
+/* ================= 棋盘 ================= */
+.board-col{display:flex;flex-direction:column;align-items:center;}
+.board-head{
+  width:var(--boardw,464px);text-align:center;margin-bottom:8px;padding:7px;
+  background:var(--panel);border:1px solid var(--gold-dim);border-radius:9px;
+  font-size:16px;letter-spacing:2px;color:var(--gold);font-weight:700;
+}
+.board-wrap{position:relative;}
+#board{
+  position:relative;width:calc(var(--cell) * 8);height:calc(var(--cell) * 8);
+  background:#12101c;border:2px solid var(--gold-dim);border-radius:10px;
+  box-shadow:0 10px 40px rgba(0,0,0,.6), inset 0 0 60px rgba(0,0,0,.5);
+  overflow:hidden;
+}
+#board.shake{animation:shake .3s;}
+@keyframes shake{0%,100%{margin-left:0}25%{margin-left:-7px}75%{margin-left:7px}}
+
+.gem{position:absolute;width:var(--cell);height:var(--cell);padding:3px;cursor:pointer;
+  transition:left .17s ease, top .17s ease;user-select:none;-webkit-user-select:none;}
+.gem .inner{
+  width:100%;height:100%;border-radius:26%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:calc(var(--cell) * .46);
+  border:1px solid rgba(0,0,0,.4);
+  box-shadow:inset 0 -4px 7px rgba(0,0,0,.42), inset 0 3px 5px rgba(255,255,255,.28), 0 2px 5px rgba(0,0,0,.5);
+  transition:box-shadow .15s, filter .15s;
+}
+.t-red .inner{background:radial-gradient(circle at 32% 28%, #ff9d76, #d92c3a 62%, #7e101c);}
+.t-blue .inner{background:radial-gradient(circle at 32% 28%, #8fd0ff, #2e6bd9 62%, #12337e);}
+.t-green .inner{background:radial-gradient(circle at 32% 28%, #a2ecab, #2e9c46 62%, #14572a);}
+.t-yellow .inner{background:radial-gradient(circle at 32% 28%, #ffe9a8, #d99a2e 62%, #7e5210);}
+.t-purple .inner{background:radial-gradient(circle at 32% 28%, #d9b0ff, #8a3ed9 62%, #451578);}
+.t-skull .inner{background:radial-gradient(circle at 32% 28%, #f2ede2, #6a6a78 62%, #2c2c36);}
+.gem.sel .inner{box-shadow:0 0 0 3px #ffd700, 0 0 16px 5px rgba(255,215,0,.55), inset 0 -4px 7px rgba(0,0,0,.42);filter:brightness(1.2);}
+.gem.doom .inner{box-shadow:0 0 12px 5px rgba(200,60,255,.8), inset 0 -4px 7px rgba(0,0,0,.5);}
+.gem.doom .inner::after{content:'';}
+.gem.pop .inner{animation:gemPop .22s forwards;}
+@keyframes gemPop{to{transform:scale(0) rotate(40deg);opacity:0;}}
+.banner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;z-index:50;}
+.banner span{
+  font-size:32px;color:#ffd700;font-weight:800;letter-spacing:3px;
+  text-shadow:0 0 14px rgba(0,0,0,.9),0 2px 4px #000;
+  background:rgba(10,8,18,.78);padding:12px 30px;border-radius:12px;
+  border:1px solid var(--gold-dim);animation:bannerIn 1.15s forwards;white-space:nowrap;
+}
+@keyframes bannerIn{0%{opacity:0;transform:scale(.55);}15%{opacity:1;transform:scale(1.06);}28%{transform:scale(1);}72%{opacity:1;}100%{opacity:0;transform:scale(1);}}
+
+/* 浮动战斗数字 */
+.hero-row{overflow:visible;}
+.float{
+  position:absolute;left:50%;top:4px;font-weight:800;font-size:15px;pointer-events:none;
+  z-index:60;text-shadow:0 1px 2px #000,0 0 6px #000;animation:floatUp 1.15s forwards;white-space:nowrap;
+}
+.float.dmg{color:#ff6a5e;}
+.float.armor{color:#ffcd5c;}
+.float.heal{color:#7ce68a;}
+.float.mana{color:#8db8ff;}
+.float.death{color:#ff3b3b;font-size:18px;}
+.float.buff{color:#e0a2ff;}
+@keyframes floatUp{0%{opacity:0;transform:translate(-50%,8px);}15%{opacity:1;}100%{opacity:0;transform:translate(-50%,-30px);}}
+
+/* 日志 */
+.log{
+  width:var(--boardw,464px);height:118px;margin-top:10px;padding:7px 11px;
+  background:rgba(10,8,18,.85);border:1px solid var(--line);border-radius:9px;
+  font-size:12.5px;line-height:1.55;overflow-y:auto;color:#c9bfa4;
+}
+.log .lg-cast{color:#ffd98a;}
+.log .lg-dmg{color:#ff8a7e;}
+.log .lg-heal{color:#8ade9a;}
+.log .lg-sys{color:#9a8fd0;}
+.log .lg-mana{color:#8db8ff;}
+
+/* ================= 结算 ================= */
+.result-box{text-align:center;background:var(--panel);border:1px solid var(--gold-dim);
+  border-radius:16px;padding:46px 70px;box-shadow:0 20px 80px rgba(0,0,0,.7);}
+.result-box h1{font-size:52px;}
+.result-box h1.win{color:#ffd700;text-shadow:0 0 30px rgba(255,215,0,.5);}
+.result-box h1.lose{color:#a0a0b0;text-shadow:0 0 30px rgba(120,120,140,.4);}
+#result-sub{margin:16px 0 30px;color:var(--ink-dim);}
+.result-btns{display:flex;gap:16px;justify-content:center;}
