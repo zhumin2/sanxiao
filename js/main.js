@@ -9,7 +9,7 @@ const App = {
   toggleHero(id){
     const i=this.selection.indexOf(id);
     if(i>=0) this.selection.splice(i,1);
-    else if(this.selection.length<4) this.selection.push(id);
+    else if(this.selection.length<3) this.selection.push(id);
     this.detailId=id;
     UI.refreshSelect();
   },
@@ -30,7 +30,7 @@ const App = {
   },
 
   startBattle(){
-    if(this.selection.length!==4) return;
+    if(this.selection.length!==3) return;
     const defs=this.selection.map(id=>getHeroDef(id));
     const team=ENEMY_TEAMS.find(t=>t.id===this.enemyTeam);
     UI.showScreen('battle');

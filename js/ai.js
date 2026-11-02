@@ -8,36 +8,48 @@ const AI = {
     if(!st||st.over||st.turn!=='enemy') return;
     st.busy=true; UI.lockInput(true); UI.syncAll();
     await sleep(650);
+    try {
+      const side='enemy';
+      const team=Battle.teamArr(side);
 
-    const side='enemy';
-    const team=Battle.teamArr(side);
+      /* 1) 评估可施放技能 */
+      let bestCast=null;
+      for(const h of Battle.alive(team)){
+        h.def.skills.forEach((sk,i)=>{
+          if(!Battle.canCast(h,sk)) return;
+          const s=this.skillScore(h,sk)*this.noise();
+          if(!bestCast||s>bestCast.score) bestCast={hero:h, idx:i, score:s};
+        });
+      }
 
-    /* 1) 评估可施放技能 */
-    let bestCast=null;
-    for(const h of Battle.alive(team)){
-      h.def.skills.forEach((sk,i)=>{
-        if(!Battle.canCast(h,sk)) return;
-        const s=this.skillScore(h,sk)*this.noise();
-        if(!bestCast||s>bestCast.score) bestCast={hero:h, idx:i, score:s};
-      });
+      /* 2) 评估全部走子 */
+      const frontHero=Battle.front(team);
+      const perSkull=frontHero?frontHero.atk:4;
+      const moves=this.enumerateMoves(st.board, perSkull);
+      const bestMove=moves[0]||null;
+
+      if(bestCast&&(!bestMove||bestCast.score>bestMove.score*1.12+4)){
+        await Battle.doCast(side, bestCast.hero, bestCast.idx, {ai:true});
+        return;
+      }
+      if(!bestMove){ Battle.prepareTurn(); return; }
+
+      const pick=this.weightedPick(moves.slice(0,3));
+      if(!pick){ Battle.prepareTurn(); return; }
+      const [[r1,c1],[r2,c2]]=pick.swap;
+      await Battle.doSwap(side, st.board[r1][c1], st.board[r2][c2]);
+    } catch(err){
+      /* 兜底：任何异常都不允许卡死回合 */
+      console.error('[AI]', err);
+      UI.log('敌方行动出现异常，跳过本次行动','lg-sys');
+      if(Battle.state&&!Battle.state.over&&Battle.state.turn==='enemy'){
+        Battle.state.turn='player';
+        Battle.state.turnNo++;
+        Battle.state.busy=false;
+        UI.syncAll();
+        Battle.prepareTurn();
+      }
     }
-
-    /* 2) 评估全部走子 */
-    const frontHero=Battle.front(team);
-    const perSkull=frontHero?frontHero.atk:4;
-    const moves=this.enumerateMoves(st.board, perSkull);
-    const bestMove=moves[0]||null;
-
-    if(bestCast&&(!bestMove||bestCast.score>bestMove.score*1.12+4)){
-      await Battle.doCast(side, bestCast.hero, bestCast.idx);
-      return;
-    }
-    if(!bestMove){ Battle.prepareTurn(); return; }
-
-    const pick=this.weightedPick(moves.slice(0,3));
-    if(!pick){ Battle.prepareTurn(); return; }
-    const [[r1,c1],[r2,c2]]=pick.swap;
-    await Battle.doSwap(side, st.board[r1][c1], st.board[r2][c2]);
   },
 
   noise(){ return 0.88+Math.random()*0.24; },

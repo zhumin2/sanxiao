@@ -36,7 +36,7 @@ const UI = {
     scr.innerHTML=`
       <div class="select-wrap">
         <div class="select-left">
-          <h2>选择 4 名英雄出战（点击加入，顺序即站位）</h2>
+          <h2>选择 3 名英雄出战（点击加入，顺序即站位）</h2>
           <div class="roster-grid" id="roster-grid"></div>
         </div>
         <div class="select-right">
@@ -97,7 +97,7 @@ const UI = {
     }
     const slots=scr.querySelector('#team-slots');
     slots.innerHTML='';
-    for(let i=0;i<4;i++){
+    for(let i=0;i<3;i++){
       const id=App.selection[i];
       const d=document.createElement('div');
       d.className='tslot'+(id?' filled':'');
@@ -110,7 +110,7 @@ const UI = {
     }
     scr.querySelectorAll('.enemy-opt').forEach(b=>b.classList.toggle('on',b.dataset.id===App.enemyTeam));
     const btn=scr.querySelector('#btn-battle');
-    if(btn) btn.disabled=App.selection.length!==4;
+    if(btn) btn.disabled=App.selection.length!==3;
   },
 
   /* ================= 战斗界面 ================= */

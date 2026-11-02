@@ -18,7 +18,7 @@ const Battle = {
     });
     const players=playerDefs.map((d,i)=>mk(d,'player',i));
     const enemies=enemyTeam.random
-      ? [...HERO_ROSTER].sort(()=>Math.random()-0.5).slice(0,4).map((d,i)=>mk(d,'enemy',i))
+      ? [...HERO_ROSTER].sort(()=>Math.random()-0.5).slice(0,3).map((d,i)=>mk(d,'enemy',i))
       : enemyTeam.heroes.map((id,i)=>mk(getHeroDef(id),'enemy',i));
 
     this.state={
@@ -108,9 +108,10 @@ const Battle = {
     return Object.entries(skill.cost).every(([c,n])=>hero.mana[c]>=n);
   },
 
-  async doCast(side, hero, skillIdx){
+  async doCast(side, hero, skillIdx, opts={}){
     const st=this.state;
-    if(!st||st.busy||st.over||st.turn!==side) return;
+    if(!st||st.over||st.turn!==side) return;
+    if(st.busy&&!opts.ai) return;   // AI 在自身回合内 busy=true 调用，须放行
     const skill=hero.def.skills[skillIdx];
     if(!this.canCast(hero,skill)) return;
 

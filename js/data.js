@@ -124,9 +124,9 @@ const BOSS_HERO = {
 
 /* ===== 敌方队伍预设 ===== */
 const ENEMY_TEAMS = [
-  { id:'villains', name:'峡谷反派', desc:'白起 · 兰陵王 · 钟馗 · 东皇太一', heroes:['baiqi','lanling','zhongkui','donghuang'] },
-  { id:'mirror',   name:'镜像试炼', desc:'随机 4 名英雄组成的镜像战队',    random:true },
-  { id:'boss',     name:'主宰巢穴', desc:'挑战暗影主宰（高难度 Boss 战）',  heroes:['zhuzai'] },
+  { id:'villains', name:'峡谷反派', desc:'白起 · 兰陵王 · 钟馗', heroes:['baiqi','lanling','zhongkui'] },
+  { id:'mirror',   name:'镜像试炼', desc:'随机 3 名英雄组成的镜像战队', random:true },
+  { id:'boss',     name:'主宰巢穴', desc:'挑战暗影主宰（高难度 Boss 战）', heroes:['zhuzai'] },
 ];
 
 function getHeroDef(id){
