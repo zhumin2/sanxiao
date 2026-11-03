@@ -29,8 +29,8 @@ const Battle = {
     this.lastSetup={playerDefs, enemyTeam};
 
     UI.buildBattleScreen(this.state);
-    UI.log(`战斗开始：我方 vs ${enemyTeam.name}！`,'lg-sys');
-    UI.log(`骷髅伤害由前排英雄的攻击力决定，法力优先充给靠前的英雄。`,'lg-sys');
+    UI.log(`战斗开始：${UI.hname(this.state.teams.player[0])} vs ${enemyTeam.name}！`,'lg-sys');
+    UI.log(`骷髅伤害由你方英雄的攻击力决定，只有亲和色的宝石会充能。`,'lg-sys');
     this.prepareTurn();
   },
 
