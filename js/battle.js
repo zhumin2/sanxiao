@@ -18,7 +18,7 @@ const Battle = {
     });
     const players=playerDefs.map((d,i)=>mk(d,'player',i));
     const enemies=enemyTeam.random
-      ? [...HERO_ROSTER].sort(()=>Math.random()-0.5).slice(0,3).map((d,i)=>mk(d,'enemy',i))
+      ? [HERO_ROSTER[Math.floor(Math.random()*HERO_ROSTER.length)]].map((d,i)=>mk(d,'enemy',i))
       : enemyTeam.heroes.map((id,i)=>mk(getHeroDef(id),'enemy',i));
 
     this.state={

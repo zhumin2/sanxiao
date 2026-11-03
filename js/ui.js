@@ -36,7 +36,7 @@ const UI = {
     scr.innerHTML=`
       <div class="select-wrap">
         <div class="select-left">
-          <h2>选择 3 名英雄出战（点击加入，顺序即站位）</h2>
+          <h2>选择 1 名英雄出战（1v1 单挑）</h2>
           <div class="roster-grid" id="roster-grid"></div>
         </div>
         <div class="select-right">
@@ -97,20 +97,20 @@ const UI = {
     }
     const slots=scr.querySelector('#team-slots');
     slots.innerHTML='';
-    for(let i=0;i<3;i++){
+    for(let i=0;i<1;i++){
       const id=App.selection[i];
       const d=document.createElement('div');
       d.className='tslot'+(id?' filled':'');
       if(id){
         const hd=getHeroDef(id);
-        d.innerHTML=`<span class="ts-emoji">${hd.emoji}</span><span>${hd.name}</span><span class="ts-pos">${i===0?'前排':'第 '+(i+1)+' 位'}</span>`;
+        d.innerHTML=`<span class="ts-emoji">${hd.emoji}</span><span>${hd.name}</span><span class="ts-pos">出战英雄</span>`;
       } else d.innerHTML=`<span class="ts-emoji">＋</span><span>空位</span>`;
       d.addEventListener('click',()=>App.removeHero(i));
       slots.appendChild(d);
     }
     scr.querySelectorAll('.enemy-opt').forEach(b=>b.classList.toggle('on',b.dataset.id===App.enemyTeam));
     const btn=scr.querySelector('#btn-battle');
-    if(btn) btn.disabled=App.selection.length!==3;
+    if(btn) btn.disabled=App.selection.length!==1;
   },
 
   /* ================= 战斗界面 ================= */
