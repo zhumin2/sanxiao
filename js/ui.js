@@ -143,11 +143,6 @@ const UI = {
     });
     this.buildTeamPanel('player',st.teams.player);
     this.buildTeamPanel('enemy',st.teams.enemy);
-    /* 面板滚动时收起悬浮说明（浮层为固定定位，不随面板滚动） */
-    ['panel-player','panel-enemy'].forEach(id=>{
-      const p=document.getElementById(id);
-      if(p) p.addEventListener('scroll',()=>this.hideSkillTip());
-    });
     this.rebuildBoard();
   },
 
@@ -178,22 +173,19 @@ const UI = {
       tag.className='skill-hero-tag'; tag.textContent=`— ${h.def.name} —`;
       panel.appendChild(tag);
       h.def.skills.forEach((sk,i)=>{
+        const wrap=document.createElement('div');
+        wrap.className='skill-item';
         const btn=document.createElement('div');
         btn.className='skill-btn';
-        btn.innerHTML=`<span class="sk-name" title="${sk.desc}">${sk.name}</span><span class="sk-cost">${costPips(sk.cost)}</span>`;
+        btn.innerHTML=`<span class="sk-name">${sk.name}</span><span class="sk-cost">${costPips(sk.cost)}</span>`;
+        btn.title=sk.desc;
+        const desc=document.createElement('div');
+        desc.className='skill-desc';
+        desc.textContent=sk.desc;
         if(side==='player') btn.addEventListener('click',()=>Battle.doCast('player',h,i));
-        btn.addEventListener('mouseenter',()=>this.showSkillTip(btn,h,sk));
-        btn.addEventListener('mouseleave',()=>this.hideSkillTip());
-        if(side!=='player'){
-          btn.classList.add('enemy-skill');
-          btn.addEventListener('click',()=>{
-            this.showSkillTip(btn,h,sk);
-            clearTimeout(this._tipT);
-            this._tipT=setTimeout(()=>this.hideSkillTip(),2200);
-          });
-        }
-        panel.appendChild(btn);
-        this.skillBtns.push({hero:h, idx:i, el:btn});
+        wrap.appendChild(btn); wrap.appendChild(desc);
+        panel.appendChild(wrap);
+        this.skillBtns.push({hero:h, idx:i, el:btn, desc});
       });
     });
   },
@@ -228,10 +220,22 @@ const UI = {
 
   refreshSkills(){
     const st=Battle.state; if(!st) return;
-    for(const {hero,idx,el} of this.skillBtns){
+    for(const {hero,idx,el,desc} of this.skillBtns){
       const sk=hero.def.skills[idx];
-      el.classList.toggle('ready',Battle.canCast(hero,sk)&&!st.over);
+      const can=Battle.canCast(hero,sk)&&!st.over;
+      el.classList.toggle('ready',can);
       el.classList.toggle('enemy-skill',hero.side==='enemy');
+      if(desc){
+        if(hero.side==='player'&&!can&&!st.over){
+          /* 未充能时在说明后附上还差多少法力 */
+          const lack=Object.entries(sk.cost)
+            .map(([c,n])=>{ const d=Math.max(0,n-hero.mana[c]); return d>0?`${GEMS[c].icon}${d}`:''; })
+            .filter(Boolean).join(' ');
+          desc.innerHTML=sk.desc+(lack?` <span class="sk-lack">还差 ${lack}</span>`:'');
+        } else {
+          desc.textContent=sk.desc;
+        }
+      }
     }
   },
 
@@ -250,60 +254,6 @@ const UI = {
   lockInput(b){
     const root=document.getElementById('battle-root');
     if(root) root.classList.toggle('locked',b);
-    if(b) this.hideSkillTip();
-  },
-
-  /* ---------- 技能悬浮说明 ---------- */
-  ensureSkillTip(){
-    let t=document.getElementById('skill-tip');
-    if(!t){
-      t=document.createElement('div');
-      t.id='skill-tip';
-      document.body.appendChild(t);
-    }
-    return t;
-  },
-
-  showSkillTip(el,hero,skill){
-    const tip=this.ensureSkillTip();
-    let status='', cls='';
-    if(typeof Battle!=='undefined'&&Battle.state){
-      const can=Battle.canCast(hero,skill);
-      if(hero.side==='player'){
-        if(can){ status='✔ 法力充足，点击施放'; cls='ok'; }
-        else{
-          const lack=Object.entries(skill.cost)
-            .map(([c,n])=>{ const d=Math.max(0,n-hero.mana[c]); return d>0?`${GEMS[c].icon}${d}`:''; })
-            .filter(Boolean).join(' ');
-          status=`✖ 法力不足，还差 ${lack}`; cls='bad';
-        }
-      } else {
-        status=can?'⚠ 敌方法力充足，随时可能施放':'敌方技能';
-        cls=can?'warn':'';
-      }
-    }
-    tip.innerHTML=`
-      <div class="st-name">${skill.name}</div>
-      <div class="st-cost">${costPips(skill.cost)}</div>
-      <div class="st-desc">${skill.desc}</div>
-      ${status?`<div class="st-status ${cls}">${status}</div>`:''}`;
-    /* 先显示再测量，避免高度为 0 */
-    tip.classList.add('show');
-    const r=el.getBoundingClientRect();
-    const tw=tip.offsetWidth, th=tip.offsetHeight;
-    let x;
-    if(r.left+r.width/2 < window.innerWidth/2) x=r.right+10;
-    else x=r.left-tw-10;
-    let y=Math.min(Math.max(8,r.top), Math.max(8, window.innerHeight-th-8));
-    x=Math.max(8, Math.min(x, window.innerWidth-tw-8));
-    tip.style.left=x+'px';
-    tip.style.top=y+'px';
-  },
-
-  hideSkillTip(){
-    const t=document.getElementById('skill-tip');
-    if(t) t.classList.remove('show');
-    clearTimeout(this._tipT);
   },
 
   /* ---------- 棋盘 ---------- */
