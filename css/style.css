@@ -202,6 +202,30 @@ h1{font-size:54px;letter-spacing:14px;color:var(--gold);
 }
 #board.shake{animation:shake .3s;}
 @keyframes shake{0%,100%{margin-left:0}25%{margin-left:-7px}75%{margin-left:7px}}
+/* 骷髅命中：红光 + 震动 */
+#board.board-hit{animation:boardHit .38s;}
+@keyframes boardHit{
+  0%,100%{box-shadow:0 10px 40px rgba(0,0,0,.6), inset 0 0 60px rgba(0,0,0,.5);margin-left:0;}
+  25%{box-shadow:0 0 0 5px rgba(255,70,45,.85), 0 10px 40px rgba(0,0,0,.6);margin-left:-6px;}
+  60%{box-shadow:0 0 0 3px rgba(255,70,45,.55), 0 10px 40px rgba(0,0,0,.6);margin-left:6px;}
+}
+/* 施法：全盘亮起 */
+#board.board-cast{animation:boardCast .5s;}
+@keyframes boardCast{0%{filter:brightness(1);}35%{filter:brightness(1.75);}100%{filter:brightness(1);}}
+/* 粒子迸发（5消 / 末日骷髅） */
+.fx-particle{
+  position:absolute;width:8px;height:8px;border-radius:50%;pointer-events:none;z-index:40;
+  background:radial-gradient(circle,#fff3c4,#ffd700 70%,rgba(255,180,0,0));
+  box-shadow:0 0 6px 2px rgba(255,215,0,.55);
+  animation:fxFly .68s ease-out forwards;
+}
+@keyframes fxFly{
+  0%{opacity:1;transform:translate(0,0) scale(1);}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.15);}
+}
+/* Boss 狂暴头像 */
+.hero-row.rage .hr-portrait{box-shadow:0 0 14px 5px rgba(255,70,45,.85);border-color:#ff5a45;}
+.hero-row.rage::after{content:'🔥';position:absolute;right:6px;top:6px;font-size:14px;}
 
 .gem{position:absolute;width:var(--cell);height:var(--cell);padding:3px;cursor:pointer;
   transition:left .17s ease, top .17s ease;user-select:none;-webkit-user-select:none;}

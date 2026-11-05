@@ -43,6 +43,7 @@ const UI = {
           <div class="side-box" id="hero-detail"><div class="hint">点击左侧英雄查看详情</div></div>
           <div class="side-box"><h3>出战阵容</h3><div id="team-slots"></div></div>
           <div class="side-box"><h3>选择对手</h3><div id="enemy-options"></div></div>
+          <div class="side-box"><h3>AI 难度</h3><div id="ai-levels"></div></div>
           <button id="btn-battle" class="btn big">开 始 战 斗</button>
         </div>
       </div>`;
@@ -66,6 +67,14 @@ const UI = {
       b.innerHTML=`${t.name}<div class="eo-desc">${t.desc}</div>`;
       b.addEventListener('click',()=>App.setEnemyTeam(t.id));
       eo.appendChild(b);
+    });
+    const al=scr.querySelector('#ai-levels');
+    [['easy','简单','偶尔犯错，适合熟悉规则'],['normal','普通','走子评估 + 择机施法'],['hard','困难','步步最优，施法果断']].forEach(([id,label,desc])=>{
+      const b=document.createElement('button');
+      b.className='enemy-opt'; b.dataset.id=id;
+      b.innerHTML=`${label}<div class="eo-desc">${desc}</div>`;
+      b.addEventListener('click',()=>App.setAiLevel(id));
+      al.appendChild(b);
     });
     scr.querySelector('#btn-battle').addEventListener('click',()=>App.startBattle());
     this.refreshSelect();
@@ -108,7 +117,10 @@ const UI = {
       d.addEventListener('click',()=>App.removeHero(i));
       slots.appendChild(d);
     }
-    scr.querySelectorAll('.enemy-opt').forEach(b=>b.classList.toggle('on',b.dataset.id===App.enemyTeam));
+    scr.querySelectorAll('.enemy-opt').forEach(b=>{
+      if(b.closest('#enemy-options')) b.classList.toggle('on',b.dataset.id===App.enemyTeam);
+      if(b.closest('#ai-levels')) b.classList.toggle('on',b.dataset.id===App.aiLevel);
+    });
     const btn=scr.querySelector('#btn-battle');
     if(btn) btn.disabled=App.selection.length!==1;
   },
@@ -122,7 +134,10 @@ const UI = {
         <div class="battle-top">
           <span class="vs">我方 vs ${st.enemyTeam.name}</span>
           <span class="turninfo" id="turn-info"></span>
-          <button class="btn small" id="btn-concede">投 降</button>
+          <span class="top-btns">
+            <button class="btn small" id="btn-sound"></button>
+            <button class="btn small" id="btn-concede">投 降</button>
+          </span>
         </div>
         <div class="battle-layout">
           <div class="team-panel" id="panel-player"></div>
@@ -140,6 +155,12 @@ const UI = {
     document.getElementById('btn-concede').addEventListener('click',()=>{
       const st2=Battle.state;
       if(st2&&!st2.over){ st2.over=true; st2.winner='enemy'; UI.showResult(false); }
+    });
+    this.refreshSoundBtn();
+    document.getElementById('btn-sound').addEventListener('click',()=>{
+      Sound.setEnabled(!Sound.enabled);
+      this.refreshSoundBtn();
+      if(Sound.enabled) Sound.play('ui');
     });
     this.buildTeamPanel('player',st.teams.player);
     this.buildTeamPanel('enemy',st.teams.enemy);
@@ -194,6 +215,7 @@ const UI = {
   syncHero(h){
     const row=this.heroCardEls.get(h); if(!row) return;
     row.classList.toggle('dead',!h.alive);
+    if(h.def.boss&&Battle.state) row.classList.toggle('rage',!!Battle.state.bossRaged);
     const bars=row.querySelectorAll('.bar');
     const hpBar=bars[0], arBar=bars[1];
     hpBar.querySelector('.bar-fill').style.width=(h.hp/h.maxHp*100)+'%';
@@ -254,6 +276,47 @@ const UI = {
   lockInput(b){
     const root=document.getElementById('battle-root');
     if(root) root.classList.toggle('locked',b);
+  },
+
+  refreshSoundBtn(){
+    const b=document.getElementById('btn-sound');
+    if(b) b.textContent=Sound.enabled?'🔊 音效':'🔇 静音';
+  },
+
+  /* ---------- 棋盘特效 ---------- */
+  boardHit(){
+    const b=document.getElementById('board');
+    if(!b) return;
+    b.classList.remove('board-hit'); void b.offsetWidth;
+    b.classList.add('board-hit');
+    setTimeout(()=>b.classList.remove('board-hit'), 400);
+  },
+
+  boardCast(){
+    const b=document.getElementById('board');
+    if(!b) return;
+    b.classList.remove('board-cast'); void b.offsetWidth;
+    b.classList.add('board-cast');
+    setTimeout(()=>b.classList.remove('board-cast'), 500);
+  },
+
+  /* 粒子迸发：cells 为 [r,c] 数组 */
+  burst(cells){
+    const board=document.getElementById('board');
+    if(!board) return;
+    (cells||[]).forEach(([r,c])=>{
+      for(let i=0;i<4;i++){
+        const p=document.createElement('span');
+        p.className='fx-particle';
+        p.style.left=(c*CELL+CELL/2-4)+'px';
+        p.style.top=(r*CELL+CELL/2-4)+'px';
+        const ang=Math.random()*Math.PI*2, dist=24+Math.random()*34;
+        p.style.setProperty('--dx', Math.cos(ang)*dist+'px');
+        p.style.setProperty('--dy', (Math.sin(ang)*dist-16)+'px');
+        board.appendChild(p);
+        setTimeout(()=>p.remove(), 700);
+      }
+    });
   },
 
   /* ---------- 棋盘 ---------- */

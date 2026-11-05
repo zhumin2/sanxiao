@@ -10,7 +10,20 @@ const AI = {
     await sleep(650);
     try {
       const side='enemy';
+      const lvl=st.aiLevel||'normal';
       const team=Battle.teamArr(side);
+
+      /* Boss 狂暴被动：每 3 个敌方回合侵蚀棋盘 */
+      const boss=st.teams.enemy.find(h=>h.def.boss);
+      if(st.bossRaged&&boss&&boss.alive){
+        st.rageTurns=(st.rageTurns||0)+1;
+        if(st.rageTurns%3===0){
+          Battle.makeSkullsOnBoard(2);
+          UI.log('暗能侵蚀！2 颗宝石化为骷髅','lg-sys');
+          Sound.play('skull');
+          await sleep(400);
+        }
+      }
 
       /* 1) 评估可施放技能 */
       let bestCast=null;
@@ -28,6 +41,31 @@ const AI = {
       const moves=this.enumerateMoves(st.board, perSkull);
       const bestMove=moves[0]||null;
 
+      /* 3) 按难度决策 */
+      if(lvl==='hard'){
+        /* 困难：更果断地施法（阈值更低），永远走最优步 */
+        if(bestCast&&(!bestMove||bestCast.score>bestMove.score*0.9+2)){
+          await Battle.doCast(side, bestCast.hero, bestCast.idx, {ai:true});
+          return;
+        }
+        if(!bestMove){ Battle.prepareTurn(); return; }
+        const [[r1,c1],[r2,c2]]=bestMove.swap;
+        await Battle.doSwap(side, st.board[r1][c1], st.board[r2][c2]);
+        return;
+      }
+      if(lvl==='simple'){
+        /* 简单：只在有高价值技能（基本=可击杀）时施法，走子从全部合法步随机挑 */
+        if(bestCast&&bestCast.score>=40&&(!bestMove||bestCast.score>bestMove.score)){
+          await Battle.doCast(side, bestCast.hero, bestCast.idx, {ai:true});
+          return;
+        }
+        if(!moves.length){ Battle.prepareTurn(); return; }
+        const pick=moves[Math.floor(Math.random()*moves.length)];
+        const [[r1,c1],[r2,c2]]=pick.swap;
+        await Battle.doSwap(side, st.board[r1][c1], st.board[r2][c2]);
+        return;
+      }
+      /* 普通：原版策略，前三优加权随机 */
       if(bestCast&&(!bestMove||bestCast.score>bestMove.score*1.12+4)){
         await Battle.doCast(side, bestCast.hero, bestCast.idx, {ai:true});
         return;
@@ -52,7 +90,10 @@ const AI = {
     }
   },
 
-  noise(){ return 0.88+Math.random()*0.24; },
+  noise(){
+    const lvl=(Battle.state&&Battle.state.aiLevel)||'normal';
+    return lvl==='hard' ? 0.96+Math.random()*0.08 : 0.88+Math.random()*0.24;
+  },
 
   enumerateMoves(board, perSkull){
     const res=[];

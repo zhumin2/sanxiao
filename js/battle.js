@@ -5,7 +5,7 @@ const Battle = {
   state:null, lastSetup:null, speed:1,
 
   /* ---------- 开局 ---------- */
-  start(playerDefs, enemyTeam){
+  start(playerDefs, enemyTeam, aiLevel){
     const mk=(def,side,idx)=>({
       def, side, idx,
       hp:def.hp, maxHp:def.hp,
@@ -25,8 +25,10 @@ const Battle = {
       board:newBoard(), enemyTeam,
       teams:{player:players, enemy:enemies},
       turn:'player', turnNo:1, busy:false, over:false, winner:null,
+      aiLevel:aiLevel||'normal',
+      bossRaged:false, rageTurns:0,
     };
-    this.lastSetup={playerDefs, enemyTeam};
+    this.lastSetup={playerDefs, enemyTeam, aiLevel};
 
     UI.buildBattleScreen(this.state);
     UI.log(`战斗开始：${UI.hname(this.state.teams.player[0])} vs ${enemyTeam.name}！`,'lg-sys');
@@ -34,7 +36,7 @@ const Battle = {
     this.prepareTurn();
   },
 
-  restart(){ if(this.lastSetup) this.start(this.lastSetup.playerDefs, this.lastSetup.enemyTeam); },
+  restart(){ if(this.lastSetup) this.start(this.lastSetup.playerDefs, this.lastSetup.enemyTeam, this.lastSetup.aiLevel); },
 
   teamArr(side){ return this.state.teams[side]; },
   other(side){ return side==='player'?'enemy':'player'; },
@@ -54,11 +56,26 @@ const Battle = {
     if(st.turn==='enemy'){ UI.lockInput(true); sleep(900).then(()=>AI.takeTurn()); }
   },
 
+  /* Boss 血量过半触发狂暴 */
+  checkBossRage(target){
+    const st=this.state;
+    if(!st||st.bossRaged||!target||!target.alive||!target.def.boss) return;
+    if(target.hp<=target.maxHp/2){
+      st.bossRaged=true;
+      target.atk+=3;
+      UI.float(target,'狂暴！攻击+3','buff');
+      UI.banner('⚠ 暗影主宰 进入狂暴！');
+      UI.log('暗影主宰 血量过半，进入狂暴状态（攻击 +3，此后每 3 回合侵蚀棋盘）！','lg-sys');
+      UI.syncHero(target);
+      Sound.play('rage');
+    }
+  },
+
   async endOfAction(side, totals){
     const st=this.state;
     if(this.checkEnd()) return;
     const again=totals&&totals.extraTurn;
-    if(again){ UI.banner('额外回合！'); await sleep(750); }
+    if(again){ UI.banner('额外回合！'); Sound.play('extra'); await sleep(750); }
     else { st.turn=this.other(side); st.turnNo++; }
     UI.syncAll();
     this.prepareTurn();
@@ -72,6 +89,7 @@ const Battle = {
       st.over=true; st.winner=eAlive===0?'player':'enemy';
       st.busy=true; UI.lockInput(true); UI.syncAll();
       UI.log(st.winner==='player'?'敌方全灭——胜利！':'我方全灭——战败…','lg-sys');
+      Sound.play(st.winner==='player'?'victory':'defeat');
       setTimeout(()=>UI.showResult(st.winner==='player'), 1100);
       return true;
     }
@@ -120,6 +138,8 @@ const Battle = {
     UI.syncHero(hero);
     UI.log(`${UI.hname(hero)} 施放【${skill.name}】`,'lg-cast');
     UI.banner(skill.name);
+    UI.boardCast();
+    Sound.play('cast');
     await sleep(800);
 
     const ctx={caster:hero, self:this.teamArr(side), enemy:this.teamArr(this.other(side)), extraTurn:false};
@@ -151,6 +171,7 @@ const Battle = {
       if(!groups.length) break;
       totals.cascades++;
       UI.popGroups(groups);
+      Sound.play('match', {cascade: totals.cascades});
       await sleep(210);
       for(const grp of groups){
         const n=grp.cells.length;
@@ -182,8 +203,10 @@ const Battle = {
         const idx=Math.floor(Math.random()*cands.length);
         const g=cands.splice(idx,1)[0];
         g.type='skull'; g.doom=true; UI.updateGemEl(g);
+        UI.burst([[g.r,g.c]]);
       }
       UI.log('☠ 末日骷髅降临棋盘（双倍骷髅伤害）！','lg-sys');
+      Sound.play('doom');
     }
 
     /* 骷髅伤害 */
@@ -191,6 +214,8 @@ const Battle = {
       const t=this.front(this.teamArr(this.other(side)));
       if(t){
         UI.banner('💀 骷髅攻击！');
+        UI.boardHit();
+        Sound.play('skull');
         await sleep(500);
         this.dealDamage(t, totals.skullDmg, {});
         await sleep(320);
@@ -315,6 +340,7 @@ const Battle = {
       }
     }
     UI.syncHero(target);
+    this.checkBossRage(target);
     return killed;
   },
 

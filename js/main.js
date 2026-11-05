@@ -2,9 +2,10 @@
 /* ================= 应用入口 ================= */
 
 const App = {
-  selection:[],   // 出战英雄 id，顺序 = 站位（前排在前）
+  selection:[],   // 出战英雄 id
   detailId:null,
-  enemyTeam:'villains',
+  enemyTeam:'baiqi',
+  aiLevel:'normal',
 
   toggleHero(id){
     const i=this.selection.indexOf(id);
@@ -24,6 +25,11 @@ const App = {
     UI.refreshSelect();
   },
 
+  setAiLevel(id){
+    this.aiLevel=id;
+    UI.refreshSelect();
+  },
+
   showSelect(){
     UI.showScreen('select');
     UI.renderSelect();
@@ -34,7 +40,7 @@ const App = {
     const defs=this.selection.map(id=>getHeroDef(id));
     const team=ENEMY_TEAMS.find(t=>t.id===this.enemyTeam);
     UI.showScreen('battle');
-    Battle.start(defs,team);
+    Battle.start(defs,team,this.aiLevel);
   },
 };
 
