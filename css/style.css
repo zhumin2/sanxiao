@@ -108,6 +108,7 @@ h1{font-size:54px;letter-spacing:14px;color:var(--gold);
 }
 .battle-top .vs{color:var(--gold);font-size:17px;letter-spacing:2px;font-weight:700;}
 .battle-top .turninfo{font-size:16px;}
+.top-btns{display:flex;gap:8px;align-items:center;}
 .battle-top .turninfo.enemy{color:#ff8a7e;}
 .battle-top .turninfo.player{color:#8ade9a;}
 .battle-layout{display:flex;gap:14px;align-items:flex-start;justify-content:center;}
@@ -226,6 +227,38 @@ h1{font-size:54px;letter-spacing:14px;color:var(--gold);
 /* Boss 狂暴头像 */
 .hero-row.rage .hr-portrait{box-shadow:0 0 14px 5px rgba(255,70,45,.85);border-color:#ff5a45;}
 .hero-row.rage::after{content:'🔥';position:absolute;right:6px;top:6px;font-size:14px;}
+
+/* ================= 征服模式 ================= */
+.gold-badge{color:#ffd700;font-weight:800;font-size:16px;letter-spacing:1px;
+  text-shadow:0 0 8px rgba(255,215,0,.35);}
+.float.gold{color:#ffd700;}
+.side-box.disabled{opacity:.4;pointer-events:none;}
+
+.shop-box{
+  width:100%;max-width:860px;background:var(--panel);
+  border:1px solid var(--gold-dim);border-radius:16px;padding:30px 36px;
+  box-shadow:0 20px 80px rgba(0,0,0,.7);
+}
+.shop-title{color:var(--gold);letter-spacing:6px;font-size:30px;text-align:center;}
+.shop-meta{display:flex;justify-content:space-between;align-items:center;
+  margin:14px 0 6px;font-size:15px;color:var(--ink-dim);}
+.shop-gold{color:#ffd700;font-weight:800;font-size:22px;}
+.shop-hero{font-size:13px;color:var(--ink-dim);margin-bottom:16px;
+  padding:8px 12px;background:#141020;border:1px solid var(--line);border-radius:8px;}
+.shop-items{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+.shop-card{
+  background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+  padding:14px 10px;text-align:center;display:flex;flex-direction:column;gap:6px;
+  transition:border-color .12s, transform .12s;
+}
+.shop-card:hover{border-color:var(--gold-dim);transform:translateY(-2px);}
+.shop-card.sold{opacity:.45;pointer-events:none;filter:grayscale(.6);}
+.sc-icon{font-size:34px;}
+.sc-name{font-weight:700;font-size:15px;color:#ffe9b8;}
+.sc-desc{font-size:12px;color:#b7a98a;min-height:34px;line-height:1.45;}
+.sc-price{color:#ffd700;font-weight:800;font-size:14px;}
+.sc-buy{align-self:center;margin-top:2px;}
+@media (max-width: 900px){ .shop-items{grid-template-columns:repeat(2,1fr);} }
 
 .gem{position:absolute;width:var(--cell);height:var(--cell);padding:3px;cursor:pointer;
   transition:left .17s ease, top .17s ease;user-select:none;-webkit-user-select:none;}

@@ -5,7 +5,7 @@ const Battle = {
   state:null, lastSetup:null, speed:1,
 
   /* ---------- 开局 ---------- */
-  start(playerDefs, enemyTeam, aiLevel){
+  start(playerDefs, enemyTeam, aiLevel, opts={}){
     const mk=(def,side,idx)=>({
       def, side, idx,
       hp:def.hp, maxHp:def.hp,
@@ -27,8 +27,14 @@ const Battle = {
       turn:'player', turnNo:1, busy:false, over:false, winner:null,
       aiLevel:aiLevel||'normal',
       bossRaged:false, rageTurns:0,
+      conquest:!!opts.conquest,
     };
     this.lastSetup={playerDefs, enemyTeam, aiLevel};
+    /* 征服模式：延续（或首次接管）英雄实例，须在渲染面板前完成 */
+    if(this.state.conquest&&typeof Conquest!=='undefined'){
+      const carried=Conquest.attachHero(this.state.teams.player[0]);
+      if(carried!==this.state.teams.player[0]) this.state.teams.player[0]=carried;
+    }
 
     UI.buildBattleScreen(this.state);
     UI.log(`战斗开始：${UI.hname(this.state.teams.player[0])} vs ${enemyTeam.name}！`,'lg-sys');
@@ -90,7 +96,14 @@ const Battle = {
       st.busy=true; UI.lockInput(true); UI.syncAll();
       UI.log(st.winner==='player'?'敌方全灭——胜利！':'我方全灭——战败…','lg-sys');
       Sound.play(st.winner==='player'?'victory':'defeat');
-      setTimeout(()=>UI.showResult(st.winner==='player'), 1100);
+      setTimeout(()=>{
+        if(st.conquest&&typeof Conquest!=='undefined'){
+          if(st.winner==='player') Conquest.onStageWon();
+          else Conquest.onRunLost();
+        } else {
+          UI.showResult(st.winner==='player');
+        }
+      }, 1100);
       return true;
     }
     return false;
@@ -224,6 +237,11 @@ const Battle = {
     /* 法力充能 */
     for(const c of COLOR_IDS){
       if(totals.mana[c]>0) this.gainColorMana(side, c, totals.mana[c]);
+    }
+    /* 征服模式：黄金宝石额外产出金币 */
+    if(st.conquest&&totals.mana.yellow>0&&side==='player'){
+      Conquest.addGold(totals.mana.yellow);
+      UI.float(st.teams.player[0], `+${totals.mana.yellow}💰`, 'gold');
     }
     UI.syncAll();
     return totals;

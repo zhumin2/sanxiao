@@ -18,9 +18,7 @@ const UI = {
 
   init(){
     document.getElementById('btn-start').addEventListener('click',()=>App.showSelect());
-    document.getElementById('btn-again').addEventListener('click',()=>{
-      UI.showScreen('battle'); Battle.restart();
-    });
+    document.getElementById('btn-again').addEventListener('click',()=>App.restartLast());
     document.getElementById('btn-reselect').addEventListener('click',()=>App.showSelect());
   },
 
@@ -42,7 +40,8 @@ const UI = {
         <div class="select-right">
           <div class="side-box" id="hero-detail"><div class="hint">点击左侧英雄查看详情</div></div>
           <div class="side-box"><h3>出战阵容</h3><div id="team-slots"></div></div>
-          <div class="side-box"><h3>选择对手</h3><div id="enemy-options"></div></div>
+          <div class="side-box"><h3>模式</h3><div id="mode-options"></div></div>
+          <div class="side-box" id="enemy-box"><h3>选择对手</h3><div id="enemy-options"></div></div>
           <div class="side-box"><h3>AI 难度</h3><div id="ai-levels"></div></div>
           <button id="btn-battle" class="btn big">开 始 战 斗</button>
         </div>
@@ -59,6 +58,14 @@ const UI = {
         <div class="hc-colors">${def.colors.map(c=>`<i class="color-dot" style="background:${GEMS[c].hex}" title="${GEMS[c].name}"></i>`).join('')}</div>`;
       card.addEventListener('click',()=>App.toggleHero(def.id));
       grid.appendChild(card);
+    });
+    const mo=scr.querySelector('#mode-options');
+    [['duel','单挑对决','与选定的对手 1v1'],['conquest','征服模式','连闯 5 关 + 商店强化，通关主宰']].forEach(([id,label,desc])=>{
+      const b=document.createElement('button');
+      b.className='enemy-opt'; b.dataset.id=id;
+      b.innerHTML=`${label}<div class="eo-desc">${desc}</div>`;
+      b.addEventListener('click',()=>App.setMode(id));
+      mo.appendChild(b);
     });
     const eo=scr.querySelector('#enemy-options');
     ENEMY_TEAMS.forEach(t=>{
@@ -118,9 +125,12 @@ const UI = {
       slots.appendChild(d);
     }
     scr.querySelectorAll('.enemy-opt').forEach(b=>{
+      if(b.closest('#mode-options')) b.classList.toggle('on',b.dataset.id===App.mode);
       if(b.closest('#enemy-options')) b.classList.toggle('on',b.dataset.id===App.enemyTeam);
       if(b.closest('#ai-levels')) b.classList.toggle('on',b.dataset.id===App.aiLevel);
     });
+    const eoBox=scr.querySelector('#enemy-box');
+    if(eoBox) eoBox.classList.toggle('disabled',App.mode==='conquest');
     const btn=scr.querySelector('#btn-battle');
     if(btn) btn.disabled=App.selection.length!==1;
   },
@@ -134,6 +144,7 @@ const UI = {
         <div class="battle-top">
           <span class="vs">我方 vs ${st.enemyTeam.name}</span>
           <span class="turninfo" id="turn-info"></span>
+          <span class="gold-badge hidden" id="gold-badge"></span>
           <span class="top-btns">
             <button class="btn small" id="btn-sound"></button>
             <button class="btn small" id="btn-concede">投 降</button>
@@ -154,7 +165,15 @@ const UI = {
       </div>`;
     document.getElementById('btn-concede').addEventListener('click',()=>{
       const st2=Battle.state;
-      if(st2&&!st2.over){ st2.over=true; st2.winner='enemy'; UI.showResult(false); }
+      if(st2&&!st2.over){
+        st2.over=true; st2.winner='enemy'; st2.busy=true;
+        UI.lockInput(true); UI.syncAll();
+        Sound.play('defeat');
+        setTimeout(()=>{
+          if(st2.conquest&&typeof Conquest!=='undefined') Conquest.onRunLost();
+          else UI.showResult(false);
+        }, 600);
+      }
     });
     this.refreshSoundBtn();
     document.getElementById('btn-sound').addEventListener('click',()=>{
@@ -271,6 +290,16 @@ const UI = {
     const pp=document.getElementById('panel-player'), pe=document.getElementById('panel-enemy');
     if(pp) pp.classList.toggle('active',st.turn==='player'&&!st.over);
     if(pe) pe.classList.toggle('active',st.turn==='enemy'&&!st.over);
+    this.syncGold();
+  },
+
+  syncGold(){
+    const b=document.getElementById('gold-badge');
+    if(!b) return;
+    const st=Battle.state;
+    const show=!!(st&&st.conquest&&typeof Conquest!=='undefined');
+    b.classList.toggle('hidden',!show);
+    if(show) b.textContent=`💰 ${Conquest.gold}`;
   },
 
   lockInput(b){
@@ -445,13 +474,12 @@ const UI = {
     el.scrollTop=el.scrollHeight;
   },
 
-  showResult(win){
+  showResult(win, subText){
     const t=document.getElementById('result-title');
     t.textContent=win?'胜 利 ！':'战 败 …';
     t.className=win?'win':'lose';
-    document.getElementById('result-sub').textContent=win
-      ?'你击败了对手，峡谷因你而颤抖！'
-      :'胜败乃兵家常事，重新组队再战！';
+    document.getElementById('result-sub').textContent=subText
+      ||(win?'你击败了对手，峡谷因你而颤抖！':'胜败乃兵家常事，重新组队再战！');
     this.showScreen('result');
   },
 };
