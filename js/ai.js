@@ -146,6 +146,14 @@ const AI = {
       case 'berserkStrike':{ const t=Battle.front(st.teams.player); if(!t)return 0; return v*1.3-(v2||0)*0.4+(totalHp(t)<=v?45:0); }
       case 'lifestealFront': case 'soulDevour':{ const t=Battle.front(st.teams.player); if(!t)return 0; return v*1.25+v2*0.8+(totalHp(t)<=v?45:0); }
       case 'hexStrike':{ const t=Battle.front(st.teams.player); if(!t)return 0; return v*1.25+4; }
+      /* 状态效果类 */
+      case 'burnStrike':{ const t=Battle.front(st.teams.player); if(!t)return 0; return v*1.2+(totalHp(t)<=v?45:0)+8; }
+      case 'freezeStrike':{ const t=Battle.front(st.teams.player); if(!t)return 0; return v*1.15+(t.hp<=v?50:0)+10; }
+      case 'shieldFreeze': return v*0.55+10;
+      case 'poisonHit': return v*3+(v2||0)*0.8;
+      case 'poisonBlast':{ const t=Battle.front(st.teams.player); if(!t)return 0; const stacks=t.status?t.status.poison:0; return Math.max(v,stacks*6)*1.35; }
+      case 'shredStrike':{ const t=Battle.front(st.teams.player); if(!t)return 0; return v*1.2+(totalHp(t)<=v?45:0)+6; }
+      case 'convertRandom': return 13;
       case 'healAll':{ const miss=Math.max(0,...Battle.alive(st.teams.enemy).map(h=>h.maxHp-h.hp)); return Math.min(v,miss); }
       case 'shieldAll': return v*Battle.alive(st.teams.enemy).length*0.55;
       case 'shieldHealAll':{ const miss=Math.max(0,...Battle.alive(st.teams.enemy).map(h=>h.maxHp-h.hp)); return v*0.55*Battle.alive(st.teams.enemy).length+Math.min(v2,miss)*0.9; }

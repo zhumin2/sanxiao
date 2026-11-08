@@ -72,6 +72,7 @@ const Conquest = {
     this.addGold(bonus);
     const healed=Math.min(CONQUEST_STAGE_HEAL, this.hero.maxHp-this.hero.hp);
     this.hero.hp+=healed;
+    this.hero.status={burn:0,poison:0,frozen:0,shred:0};   // 关卡间清除异常状态
     UI.log(`通关奖励：+${bonus} 金币，生命 +${healed}`,'lg-heal');
     this.wins++;
     this.stageIdx++;

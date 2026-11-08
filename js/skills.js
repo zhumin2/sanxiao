@@ -40,6 +40,42 @@ const FX = {
     Battle.convertRandomGems(v2,'purple');
   },
 
+  /* ---- 状态效果类（灼烧/冰冻/中毒/破甲） ---- */
+  burnStrike(ctx,v,v2){
+    const t=Battle.front(ctx.enemy); if(!t) return;
+    Battle.dealDamage(t,v,{});
+    Battle.applyStatus(t,'burn',v2||3);
+  },
+  freezeStrike(ctx,v,v2){
+    const t=Battle.front(ctx.enemy); if(!t) return;
+    Battle.dealDamage(t,v,{});
+    Battle.applyStatus(t,'frozen',v2||1);
+  },
+  shieldFreeze(ctx,v,v2){
+    Battle.addArmor(ctx.caster,v);
+    const t=Battle.front(ctx.enemy); if(t) Battle.applyStatus(t,'frozen',v2||1);
+  },
+  poisonHit(ctx,v,v2){
+    const t=Battle.front(ctx.enemy); if(t) Battle.applyStatus(t,'poison',v);
+    if(v2) Battle.heal(ctx.caster,v2);
+  },
+  poisonBlast(ctx,v){
+    const t=Battle.front(ctx.enemy); if(!t) return;
+    const stacks=t.status?t.status.poison:0;
+    const dmg=Math.max(v,stacks*6);
+    if(t.status) t.status.poison=0;
+    UI.log(`毒爆引爆 ${stacks} 层中毒！`,'lg-cast');
+    Battle.dealDamage(t,dmg,{pierce:true});
+  },
+  shredStrike(ctx,v,v2){
+    const t=Battle.front(ctx.enemy); if(!t) return;
+    Battle.dealDamage(t,v,{});
+    Battle.applyStatus(t,'shred',v2||2);
+  },
+  convertRandom(ctx,v,color){
+    Battle.convertRandomGems(v,color);
+  },
+
   /* ---- 治疗 / 护甲 / 增益 ---- */
   healAll(ctx,v){ Battle.alive(ctx.self).forEach(h=>Battle.heal(h,v)); },
   shieldAll(ctx,v){ Battle.alive(ctx.self).forEach(h=>Battle.addArmor(h,v)); },

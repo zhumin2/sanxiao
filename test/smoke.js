@@ -69,7 +69,7 @@ swapGems(g8,a,b);
 assert(g8[0][0]===b&&g8[0][1]===a&&a.c===1&&b.c===0,'swapGems maintains r/c');
 
 /* 9. 数据完整性 */
-assert(HERO_ROSTER.length===8,'8 playable heroes');
+assert(HERO_ROSTER.length===12,'12 playable heroes');
 assert(ENEMY_ROSTER.length===4,'4 enemy heroes');
 for(const h of [...HERO_ROSTER,...ENEMY_ROSTER,BOSS_HERO]){
   const ok=h.id&&h.name&&h.hp>0&&h.skills&&h.skills.length>=3

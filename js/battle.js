@@ -15,6 +15,7 @@ const Battle = {
       manaCap:def.manaCap||MANA_CAP,
       alive:true,
       _armorMax:def.armor||10,
+      status:{burn:0,poison:0,frozen:0,shred:0},
     });
     const players=playerDefs.map((d,i)=>mk(d,'player',i));
     const enemies=enemyTeam.random
@@ -28,6 +29,8 @@ const Battle = {
       aiLevel:aiLevel||'normal',
       bossRaged:false, rageTurns:0,
       conquest:!!opts.conquest,
+      heroId:playerDefs[0]?playerDefs[0].id:null,
+      foeId:enemyTeam.heroes?enemyTeam.heroes[0]:null,
     };
     this.lastSetup={playerDefs, enemyTeam, aiLevel};
     /* 征服模式：延续（或首次接管）英雄实例，须在渲染面板前完成 */
@@ -58,8 +61,61 @@ const Battle = {
       shuffleBoard(st.board); UI.rebuildBoard();
       await sleep(450);
     }
+    /* 回合开始：结算该方的灼烧/中毒/冰冻/破甲 */
+    if(this.tickStatuses(st.turn)) return;   // DoT 可能直接结束战斗
     st.busy=false; UI.lockInput(false); UI.syncAll();
     if(st.turn==='enemy'){ UI.lockInput(true); sleep(900).then(()=>AI.takeTurn()); }
+  },
+
+  /* 状态效果回合结算。返回 true 表示战斗已结束 */
+  tickStatuses(side){
+    const st=this.state;
+    for(const h of this.teamArr(side)){
+      if(!h.alive) continue;
+      const s=h.status; if(!s) continue;
+      if(s.poison>0){
+        const dmg=s.poison*2;
+        UI.log(`☠ ${UI.hname(h)} 中毒发作，失去 ${dmg} 点生命（${s.poison} 层）`,'lg-dmg');
+        this.loseHp(h,dmg);
+        s.poison=Math.max(0,s.poison-1);
+      }
+      if(!h.alive) continue;
+      if(s.burn>0){
+        UI.log(`🔥 ${UI.hname(h)} 灼烧发作，失去 6 点生命`,'lg-dmg');
+        this.loseHp(h,6);
+        s.burn=Math.max(0,s.burn-1);
+      }
+      if(!h.alive) continue;
+      if(s.frozen>0){
+        UI.log(`❄ ${UI.hname(h)} 被冰冻，本回合无法施放技能`,'lg-sys');
+        s.frozen--;
+      }
+      if(s.shred>0){
+        UI.log(`💥 ${UI.hname(h)} 护甲破损（吸收减半）`,'lg-sys');
+        s.shred--;
+      }
+    }
+    UI.syncAll();
+    if(this.checkEnd()) return true;
+    return false;
+  },
+
+  /* 施加状态：poison 为叠层，其余为持续回合（重复施加取更大值） */
+  applyStatus(target, kind, n){
+    const st=this.state;
+    if(!target||!target.alive||!st) return;
+    if(!target.status) target.status={burn:0,poison:0,frozen:0,shred:0};
+    const label={burn:'灼烧',frozen:'冰冻',shred:'破甲'}[kind];
+    if(kind==='poison'){
+      target.status.poison+=n;
+      UI.float(target,`☠️+${n}层`,'buff');
+      UI.log(`${UI.hname(target)} 中毒 +${n} 层（当前 ${target.status.poison} 层）`,'lg-sys');
+    } else {
+      target.status[kind]=Math.max(target.status[kind]||0, n);
+      UI.float(target,`${{burn:'🔥',frozen:'❄️',shred:'💥'}[kind]}${n}`,'buff');
+      UI.log(`${UI.hname(target)} 被施加${label} ${n} 回合`,'lg-sys');
+    }
+    UI.syncHero(target);
   },
 
   /* Boss 血量过半触发狂暴 */
@@ -96,6 +152,7 @@ const Battle = {
       st.busy=true; UI.lockInput(true); UI.syncAll();
       UI.log(st.winner==='player'?'敌方全灭——胜利！':'我方全灭——战败…','lg-sys');
       Sound.play(st.winner==='player'?'victory':'defeat');
+      if(typeof Profile!=='undefined') Profile.record(st);
       setTimeout(()=>{
         if(st.conquest&&typeof Conquest!=='undefined'){
           if(st.winner==='player') Conquest.onStageWon();
@@ -136,6 +193,7 @@ const Battle = {
   /* ---------- 施法 ---------- */
   canCast(hero,skill){
     if(!hero.alive) return false;
+    if(hero.status&&hero.status.frozen>0) return false;   // 冰冻：无法施法
     return Object.entries(skill.cost).every(([c,n])=>hero.mana[c]>=n);
   },
 
@@ -339,8 +397,9 @@ const Battle = {
   dealDamage(target, amount, opts={}){
     if(!target||!target.alive) return false;
     let rem=amount, killed=false;
-    if(!opts.pierce&&target.armor>0){
-      const abs=Math.min(target.armor,rem);
+    const effArmor=(target.status&&target.status.shred>0)?Math.floor(target.armor/2):target.armor;
+    if(!opts.pierce&&effArmor>0){
+      const abs=Math.min(effArmor,rem);
       target.armor-=abs; rem-=abs;
       if(abs>0){
         UI.float(target,`-${abs}🛡`,'armor');

@@ -38,6 +38,13 @@ const UI = {
           <div class="roster-grid" id="roster-grid"></div>
         </div>
         <div class="select-right">
+          <div class="side-box"><h3>英雄档案</h3>
+            <div class="profile-line">
+              <input id="nick-input" maxlength="12" placeholder="输入昵称">
+              <button id="nick-save" class="btn small">保存</button>
+            </div>
+            <div class="profile-stats" id="profile-stats"></div>
+          </div>
           <div class="side-box" id="hero-detail"><div class="hint">点击左侧英雄查看详情</div></div>
           <div class="side-box"><h3>出战阵容</h3><div id="team-slots"></div></div>
           <div class="side-box"><h3>模式</h3><div id="mode-options"></div></div>
@@ -83,6 +90,15 @@ const UI = {
       b.addEventListener('click',()=>App.setAiLevel(id));
       al.appendChild(b);
     });
+    /* 昵称与档案 */
+    const nick=scr.querySelector('#nick-input');
+    nick.value=Profile.data.name;
+    scr.querySelector('#nick-save').addEventListener('click',()=>{
+      Profile.setName(nick.value);
+      nick.value=Profile.data.name;
+      Sound.play('ui');
+      this.refreshSelect();
+    });
     scr.querySelector('#btn-battle').addEventListener('click',()=>App.startBattle());
     this.refreshSelect();
   },
@@ -102,6 +118,7 @@ const UI = {
     const det=scr.querySelector('#hero-detail');
     const def=App.detailId?getHeroDef(App.detailId):null;
     if(def){
+      const rec=Profile.heroRecord(def.id);
       det.innerHTML=`
         <div class="hd-head">
           <div class="hd-portrait" style="background:${def.bg}">${def.emoji}</div>
@@ -109,7 +126,8 @@ const UI = {
         </div>
         <div class="hd-stats">❤ 生命 ${def.hp} ｜ 🛡 护甲 ${def.armor} ｜ ⚔ 攻击 ${def.atk}<br>
           法力亲和：${def.colors.map(c=>GEMS[c].name).join(' / ')}</div>
-        ${def.skills.map(sk=>`<div class="hd-skill"><b>${sk.name}</b>　<span class="cost-line">${costText(sk.cost)}</span><br>${sk.desc}</div>`).join('')}`;
+        ${def.skills.map(sk=>`<div class="hd-skill"><b>${sk.name}</b>　<span class="cost-line">${costText(sk.cost)}</span><br>${sk.desc}</div>`).join('')}
+        ${rec.games?`<div class="hd-record">📜 战绩：${rec.games} 战 ${rec.wins} 胜（${Math.round(rec.wins/rec.games*100)}%）</div>`:''}`;
     }
     const slots=scr.querySelector('#team-slots');
     slots.innerHTML='';
@@ -123,6 +141,11 @@ const UI = {
       } else d.innerHTML=`<span class="ts-emoji">＋</span><span>空位</span>`;
       d.addEventListener('click',()=>App.removeHero(i));
       slots.appendChild(d);
+    }
+    const ps=scr.querySelector('#profile-stats');
+    if(ps){
+      const dw=Profile.data.duelGames, dwin=Profile.data.duelWins;
+      ps.innerHTML=`👤 ${Profile.data.name}<br>⚔ 单挑 ${dw} 战 ${dwin} 胜${dw?`（${Math.round(dwin/dw*100)}%）`:''}<br>${Profile.conquestText()}`;
     }
     scr.querySelectorAll('.enemy-opt').forEach(b=>{
       if(b.closest('#mode-options')) b.classList.toggle('on',b.dataset.id===App.mode);
@@ -200,6 +223,7 @@ const UI = {
           <div class="bar hp"><div class="bar-fill" style="width:100%"></div><span></span></div>
           <div class="bar armor"><div class="bar-fill" style="width:100%"></div><span></span></div>
           <div class="mana-bars">${h.def.colors.map(c=>`<div class="mana-bar mb-${c}"><div class="mb-fill" style="width:0%"></div><span>0</span></div>`).join('')}</div>
+          <div class="status-row"></div>
         </div>`;
       rows.appendChild(row);
       this.heroCardEls.set(h,row);
@@ -248,6 +272,17 @@ const UI = {
       m.querySelector('span').textContent=h.mana[c];
     });
     row.querySelector('.hr-atk').textContent='⚔'+h.atk;
+    /* 状态图标 */
+    const srow=row.querySelector('.status-row');
+    if(srow){
+      const s=h.status||{};
+      const bits=[];
+      if(s.poison>0) bits.push(`☠️${s.poison}`);
+      if(s.burn>0) bits.push(`🔥${s.burn}`);
+      if(s.frozen>0) bits.push(`❄️${s.frozen}`);
+      if(s.shred>0) bits.push(`💥${s.shred}`);
+      srow.innerHTML=bits.map(b=>`<span class="st-badge">${b}</span>`).join('');
+    }
   },
 
   syncAll(){

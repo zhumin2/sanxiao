@@ -76,6 +76,34 @@ const HERO_ROSTER = [
       { name:'落日余晖',   cost:{yellow:8},          fx:'convertCol', color:'red', desc:'将随机一整列宝石变为烈焰' },
       { name:'灼日之矢',   cost:{red:12, yellow:10}, fx:'damageFront', v:30, desc:'对敌方造成 30 点伤害' },
     ]},
+  { id:'anqila', name:'安琪拉', title:'暗夜萝莉', role:'法师', emoji:'🔥', bg:'#c2306a',
+    hp:42, armor:8, atk:3, colors:['blue','red'],
+    skills:[
+      { name:'火球术',     cost:{red:5},             fx:'burnStrike', v:12, v2:3, desc:'对敌方造成 12 点伤害并施加灼烧（每回合 6 点真实伤害，持续 3 回合）' },
+      { name:'混沌火种',   cost:{blue:6, red:4},     fx:'convertRandom', color:'red', v:6, desc:'将随机 6 颗宝石变为烈焰' },
+      { name:'炽热光辉',   cost:{red:14, blue:10},   fx:'burnStrike', v:20, v2:3, desc:'对敌方造成 20 点伤害并施加灼烧（每回合 6 点真实伤害，持续 3 回合）' },
+    ]},
+  { id:'zhaojun', name:'王昭君', title:'冰雪之华', role:'法师', emoji:'❄️', bg:'#3a7ec8',
+    hp:44, armor:12, atk:3, colors:['blue','purple'],
+    skills:[
+      { name:'凌冬将至',   cost:{blue:5},            fx:'freezeStrike', v:9, v2:1, desc:'对敌方造成 9 点伤害并冰冻 1 回合（无法施放技能）' },
+      { name:'冰封护盾',   cost:{blue:6},            fx:'shieldFreeze', v:12, v2:1, desc:'获得 12 点护甲，并冰冻敌方 1 回合' },
+      { name:'凛冬已至',   cost:{blue:12, purple:10},fx:'freezeStrike', v:20, v2:2, desc:'对敌方造成 20 点伤害并冰冻 2 回合' },
+    ]},
+  { id:'bianque', name:'扁鹊', title:'怪医', role:'辅助', emoji:'🧪', bg:'#4a8a4a',
+    hp:46, armor:10, atk:3, colors:['green','purple'],
+    skills:[
+      { name:'恶德医疗',   cost:{green:5},           fx:'poisonHit', v:2, v2:6, desc:'施加 2 层中毒（每层每回合 2 点真实伤害，自然衰减），并回复自身 6 点生命' },
+      { name:'生命主宰',   cost:{green:8, purple:6}, fx:'poisonHit', v:3, v2:10, desc:'施加 3 层中毒，并回复自身 10 点生命' },
+      { name:'毒爆',       cost:{purple:12},         fx:'poisonBlast', v:8, desc:'引爆全部中毒：造成 层数×6 点真实伤害（至少 8 点），并清除中毒' },
+    ]},
+  { id:'lvbu', name:'吕布', title:'飞将', role:'战士', emoji:'🔱', bg:'#8a3a2a',
+    hp:62, armor:14, atk:8, colors:['red','yellow'],
+    skills:[
+      { name:'方天画戟',   cost:{red:6},             fx:'shredStrike', v:16, v2:2, desc:'对敌方造成 16 点伤害并破甲 2 回合（护甲减半）' },
+      { name:'贪狼之噬',   cost:{red:8, yellow:6},   fx:'lifestealFront', v:14, v2:8, desc:'对敌方造成 14 点伤害并回复自身 8 点生命' },
+      { name:'魔神降世',   cost:{red:14, yellow:12}, fx:'pierceFront', v:36, desc:'对敌方造成 36 点真实伤害（无视护甲）' },
+    ]},
 ];
 
 /* ===== 敌方英雄（AI 专用，单挑对手）===== */
@@ -127,6 +155,10 @@ const ENEMY_TEAMS = [
   { id:'baiqi',    name:'单挑 · 白起',   desc:'不朽战魂：高血高甲的正面硬仗', heroes:['baiqi'] },
   { id:'lanling',  name:'单挑 · 兰陵王', desc:'暗隐之刃：高攻刺客，速战速决', heroes:['lanling'] },
   { id:'zhongkui', name:'单挑 · 钟馗',   desc:'虚灵城判：吸蓝吸血，消耗流',   heroes:['zhongkui'] },
+  { id:'anqila',   name:'单挑 · 安琪拉', desc:'暗夜萝莉：灼烧流法师',         heroes:['anqila'] },
+  { id:'zhaojun',  name:'单挑 · 王昭君', desc:'冰雪之华：冰冻控制',           heroes:['zhaojun'] },
+  { id:'bianque',  name:'单挑 · 扁鹊',   desc:'怪医：中毒消耗流',             heroes:['bianque'] },
+  { id:'lvbu',     name:'单挑 · 吕布',   desc:'飞将：全场最高攻击，硬碰硬',   heroes:['lvbu'] },
   { id:'mirror',   name:'镜像试炼',      desc:'随机 1 名英雄的镜像对决',      random:true },
   { id:'boss',     name:'主宰巢穴',      desc:'挑战暗影主宰（高难度 Boss 战）', heroes:['zhuzai'] },
 ];
