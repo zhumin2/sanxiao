@@ -20,6 +20,7 @@ const UI = {
     document.getElementById('btn-start').addEventListener('click',()=>App.showSelect());
     document.getElementById('btn-again').addEventListener('click',()=>App.restartLast());
     document.getElementById('btn-reselect').addEventListener('click',()=>App.showSelect());
+    window.addEventListener('resize',()=>this.fitBoard());
   },
 
   showScreen(id){
@@ -207,6 +208,76 @@ const UI = {
     this.buildTeamPanel('player',st.teams.player);
     this.buildTeamPanel('enemy',st.teams.enemy);
     this.rebuildBoard();
+    this.fitBoard();
+    this.bindBoardGestures();
+  },
+
+  /* ---------- 棋盘缩放（小屏按视口宽度整体缩放，JS 定位逻辑不变） ---------- */
+  fitBoard(){
+    const root=document.getElementById('battle-root');
+    const wrap=document.querySelector('.board-wrap');
+    const b=document.getElementById('board');
+    if(!root||!wrap||!b) return;
+    const BASE=CELL*8+4;                      // 棋盘含边框的原始尺寸
+    const avail=Math.min(window.innerWidth-20, 520);
+    const S=Math.min(1, avail/BASE);
+    if(S===this._lastBoardScale) return;      // 未变化则跳过，避免布局抖动
+    this._lastBoardScale=S;
+    if(S<1){
+      b.style.transform=`scale(${S})`;
+      b.style.transformOrigin='top left';
+      root.style.setProperty('--boardw', (BASE*S)+'px');
+      wrap.style.width=(BASE*S)+'px';
+      wrap.style.height=(BASE*S)+'px';
+    } else {
+      b.style.transform='';
+      wrap.style.width='';
+      wrap.style.height='';
+      root.style.setProperty('--boardw', BASE+'px');
+    }
+  },
+
+  /* ---------- 触屏滑动交换（同时保留点按两下交换） ---------- */
+  bindBoardGestures(){
+    const b=document.getElementById('board');
+    if(!b||this._gesturesBound) return;
+    this._gesturesBound=true;
+    this._drag=null; this._suppressClick=false;
+    b.addEventListener('pointerdown',(e)=>{
+      const gel=e.target.closest('.gem');
+      if(!gel) return;
+      this._drag={gid:gel.dataset.gid, x:e.clientX, y:e.clientY};
+    });
+    b.addEventListener('pointermove',(e)=>{
+      if(!this._drag) return;
+      const dx=e.clientX-this._drag.x, dy=e.clientY-this._drag.y;
+      if(Math.hypot(dx,dy)<18) return;
+      const drag=this._drag; this._drag=null;
+      const st=Battle.state;
+      if(!st||st.turn!=='player'||st.busy||st.over) return;
+      const gem=this.findGemById(parseInt(drag.gid,10));
+      if(!gem) return;
+      const dr=Math.abs(dx)>Math.abs(dy)?0:(dy>0?1:-1);
+      const dc=Math.abs(dx)>Math.abs(dy)?(dx>0?1:-1):0;
+      const tr=gem.r+dr, tc=gem.c+dc;
+      if(tr<0||tr>=ROWS||tc<0||tc>=COLS||!st.board[tr][tc]) return;
+      this._suppressClick=true;
+      setTimeout(()=>{ this._suppressClick=false; }, 400);
+      this.clearSelection();
+      Battle.playerSwap(gem, st.board[tr][tc]);
+    });
+    b.addEventListener('pointerup',()=>{ this._drag=null; });
+    b.addEventListener('pointercancel',()=>{ this._drag=null; });
+  },
+
+  findGemById(id){
+    const st=Battle.state;
+    if(!st) return null;
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+      const g=st.board[r][c];
+      if(g&&g.id===id) return g;
+    }
+    return null;
   },
 
   buildTeamPanel(side,heroes){
@@ -326,6 +397,7 @@ const UI = {
     if(pp) pp.classList.toggle('active',st.turn==='player'&&!st.over);
     if(pe) pe.classList.toggle('active',st.turn==='enemy'&&!st.over);
     this.syncGold();
+    this.fitBoard();
   },
 
   syncGold(){
@@ -456,8 +528,13 @@ const UI = {
   },
 
   onGemClick(g){
+    if(this._suppressClick) return;   // 刚完成滑动交换，忽略其派生的 click
     const st=Battle.state;
     if(!st||st.busy||st.over||st.turn!=='player') return;
+    /* 部分触屏环境会为一次点按派生重复 click，导致"选中又立即取消"——去重 */
+    const now=Date.now();
+    if(this._lastTap&&this._lastTap.gid===g.id&&now-this._lastTap.t<120) return;
+    this._lastTap={gid:g.id,t:now};
     if(!this.selected){ this.selected=g; this.paintSelection(); return; }
     if(this.selected===g){ this.selected=null; this.paintSelection(); return; }
     if(areAdjacent(this.selected,g)){

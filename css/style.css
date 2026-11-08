@@ -188,9 +188,9 @@ h1{font-size:54px;letter-spacing:14px;color:var(--gold);
 .sk-cost{display:flex;align-items:center;}
 
 /* ================= 棋盘 ================= */
-.board-col{display:flex;flex-direction:column;align-items:center;}
+.board-col{display:flex;flex-direction:column;align-items:center;width:var(--boardw,452px);}
 .board-head{
-  width:var(--boardw,464px);text-align:center;margin-bottom:8px;padding:7px;
+  width:100%;text-align:center;margin-bottom:8px;padding:7px;
   background:var(--panel);border:1px solid var(--gold-dim);border-radius:9px;
   font-size:16px;letter-spacing:2px;color:var(--gold);font-weight:700;
 }
@@ -200,6 +200,7 @@ h1{font-size:54px;letter-spacing:14px;color:var(--gold);
   background:#12101c;border:2px solid var(--gold-dim);border-radius:10px;
   box-shadow:0 10px 40px rgba(0,0,0,.6), inset 0 0 60px rgba(0,0,0,.5);
   overflow:hidden;
+  touch-action:none;              /* 触屏拖动交换，不触发页面滚动 */
 }
 #board.shake{animation:shake .3s;}
 @keyframes shake{0%,100%{margin-left:0}25%{margin-left:-7px}75%{margin-left:7px}}
@@ -273,6 +274,31 @@ h1{font-size:54px;letter-spacing:14px;color:var(--gold);
 .sc-buy{align-self:center;margin-top:2px;}
 @media (max-width: 900px){ .shop-items{grid-template-columns:repeat(2,1fr);} }
 
+/* ================= 移动端适配（≤1024px 单列布局） ================= */
+@media (max-width: 1024px){
+  .screen{padding:10px;align-items:flex-start;}
+  h1{font-size:34px;letter-spacing:6px;}
+  .title-emblem{font-size:44px;}
+  .rules-box{padding:14px 16px;}
+  .select-wrap{flex-direction:column;}
+  .select-right{width:100%;}
+  .roster-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));}
+  .result-box{padding:26px 22px;margin:8px;}
+  .result-btns{flex-direction:column;gap:10px;}
+  .btn.big{padding:11px 30px;font-size:16px;}
+
+  .battle-layout{flex-direction:column;align-items:center;}
+  .team-panel{width:100%;max-width:520px;}
+  #panel-enemy{order:0;}
+  .board-col{order:1;}
+  #panel-player{order:2;}
+  .battle-top{flex-wrap:wrap;gap:8px;justify-content:center;}
+  .banner span{font-size:20px;padding:8px 14px;white-space:normal;text-align:center;}
+  .log{height:88px;}
+  .skill-btn{font-size:12px;padding:5px 7px;}
+  .skill-desc{font-size:11px;padding:2px 7px 0;}
+}
+
 .gem{position:absolute;width:var(--cell);height:var(--cell);padding:3px;cursor:pointer;
   transition:left .17s ease, top .17s ease;user-select:none;-webkit-user-select:none;}
 .gem .inner{
@@ -306,6 +332,7 @@ h1{font-size:54px;letter-spacing:14px;color:var(--gold);
 
 /* 浮动战斗数字 */
 .hero-row{overflow:visible;}
+.gem{-webkit-tap-highlight-color:transparent;}
 .float{
   position:absolute;left:50%;top:4px;font-weight:800;font-size:15px;pointer-events:none;
   z-index:60;text-shadow:0 1px 2px #000,0 0 6px #000;animation:floatUp 1.15s forwards;white-space:nowrap;
@@ -320,7 +347,7 @@ h1{font-size:54px;letter-spacing:14px;color:var(--gold);
 
 /* 日志 */
 .log{
-  width:var(--boardw,464px);height:118px;margin-top:10px;padding:7px 11px;
+  width:100%;height:118px;margin-top:10px;padding:7px 11px;
   background:rgba(10,8,18,.85);border:1px solid var(--line);border-radius:9px;
   font-size:12.5px;line-height:1.55;overflow-y:auto;color:#c9bfa4;
 }
