@@ -29,10 +29,11 @@ const Battle = {
       aiLevel:aiLevel||'normal',
       bossRaged:false, rageTurns:0,
       conquest:!!opts.conquest,
+      pvp:!!opts.pvp,
       heroId:playerDefs[0]?playerDefs[0].id:null,
       foeId:enemyTeam.heroes?enemyTeam.heroes[0]:null,
     };
-    this.lastSetup={playerDefs, enemyTeam, aiLevel};
+    this.lastSetup={playerDefs, enemyTeam, aiLevel, opts};
     /* 征服模式：延续（或首次接管）英雄实例，须在渲染面板前完成 */
     if(this.state.conquest&&typeof Conquest!=='undefined'){
       const carried=Conquest.attachHero(this.state.teams.player[0]);
@@ -40,12 +41,12 @@ const Battle = {
     }
 
     UI.buildBattleScreen(this.state);
-    UI.log(`战斗开始：${UI.hname(this.state.teams.player[0])} vs ${enemyTeam.name}！`,'lg-sys');
+    UI.log(`战斗开始：${UI.hname(this.state.teams.player[0])} vs ${this.state.pvp?UI.hname(this.state.teams.enemy[0]):enemyTeam.name}！`,'lg-sys');
     UI.log(`骷髅伤害由你方英雄的攻击力决定，只有亲和色的宝石会充能。`,'lg-sys');
     this.prepareTurn();
   },
 
-  restart(){ if(this.lastSetup) this.start(this.lastSetup.playerDefs, this.lastSetup.enemyTeam, this.lastSetup.aiLevel); },
+  restart(){ const s=this.lastSetup; if(s) this.start(s.playerDefs, s.enemyTeam, s.aiLevel, s.opts); },
 
   teamArr(side){ return this.state.teams[side]; },
   other(side){ return side==='player'?'enemy':'player'; },
@@ -64,7 +65,8 @@ const Battle = {
     /* 回合开始：结算该方的灼烧/中毒/冰冻/破甲 */
     if(this.tickStatuses(st.turn)) return;   // DoT 可能直接结束战斗
     st.busy=false; UI.lockInput(false); UI.syncAll();
-    if(st.turn==='enemy'){ UI.lockInput(true); sleep(900).then(()=>AI.takeTurn()); }
+    /* 热座模式：双方均为真人，不调度 AI；回合切换横幅在 endOfAction 中提示 */
+    if(st.turn==='enemy'&&!st.pvp){ UI.lockInput(true); sleep(900).then(()=>AI.takeTurn()); }
   },
 
   /* 状态效果回合结算。返回 true 表示战斗已结束 */
@@ -138,7 +140,14 @@ const Battle = {
     if(this.checkEnd()) return;
     const again=totals&&totals.extraTurn;
     if(again){ UI.banner('额外回合！'); Sound.play('extra'); await sleep(750); }
-    else { st.turn=this.other(side); st.turnNo++; }
+    else {
+      st.turn=this.other(side); st.turnNo++;
+      if(st.pvp){
+        UI.banner(`请把设备交给 玩家${st.turn==='player'?1:2}`);
+        Sound.play('ui');
+        await sleep(600);
+      }
+    }
     UI.syncAll();
     this.prepareTurn();
   },
@@ -150,13 +159,15 @@ const Battle = {
     if(pAlive===0||eAlive===0){
       st.over=true; st.winner=eAlive===0?'player':'enemy';
       st.busy=true; UI.lockInput(true); UI.syncAll();
-      UI.log(st.winner==='player'?'敌方全灭——胜利！':'我方全灭——战败…','lg-sys');
-      Sound.play(st.winner==='player'?'victory':'defeat');
+      UI.log(st.pvp?`玩家${st.winner==='player'?1:2} 的对手全灭！`:(st.winner==='player'?'敌方全灭——胜利！':'我方全灭——战败…'),'lg-sys');
+      Sound.play(st.pvp?'extra':(st.winner==='player'?'victory':'defeat'));
       if(typeof Profile!=='undefined') Profile.record(st);
       setTimeout(()=>{
         if(st.conquest&&typeof Conquest!=='undefined'){
           if(st.winner==='player') Conquest.onStageWon();
           else Conquest.onRunLost();
+        } else if(st.pvp){
+          UI.showResult(true, `🏆 玩家${st.winner==='player'?1:2} 获胜！`);
         } else {
           UI.showResult(st.winner==='player');
         }

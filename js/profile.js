@@ -37,6 +37,17 @@ const Profile = {
   record(st){
     if(!st||!st.over) return;
     const won=st.winner==='player';
+    /* 热座：双方各记一场，胜者 +1 胜 */
+    if(st.pvp){
+      for(const [id,w] of [[st.heroId, st.winner==='player'],[st.foeId, st.winner==='enemy']]){
+        if(!id) continue;
+        if(!this.data.heroes[id]) this.data.heroes[id]={games:0,wins:0};
+        this.data.heroes[id].games++;
+        if(w) this.data.heroes[id].wins++;
+      }
+      this.save();
+      return;
+    }
     const hid=st.heroId||'unknown';
     if(!this.data.heroes[hid]) this.data.heroes[hid]={games:0,wins:0};
     this.data.heroes[hid].games++;

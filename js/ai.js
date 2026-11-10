@@ -5,7 +5,8 @@
 const AI = {
   async takeTurn(){
     const st=Battle.state;
-    if(!st||st.over||st.turn!=='enemy') return;
+    if(!st||st.over||st.pvp) return;          // 热座模式无 AI
+    if(st.over||st.turn!=='enemy') return;
     st.busy=true; UI.lockInput(true); UI.syncAll();
     await sleep(650);
     try {

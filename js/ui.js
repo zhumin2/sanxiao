@@ -47,10 +47,10 @@ const UI = {
             <div class="profile-stats" id="profile-stats"></div>
           </div>
           <div class="side-box" id="hero-detail"><div class="hint">点击左侧英雄查看详情</div></div>
-          <div class="side-box"><h3>出战阵容</h3><div id="team-slots"></div></div>
+          <div class="side-box"><h3>出战阵容</h3><div id="team-slots"></div><div class="hint" id="mode-hint"></div></div>
           <div class="side-box"><h3>模式</h3><div id="mode-options"></div></div>
           <div class="side-box" id="enemy-box"><h3>选择对手</h3><div id="enemy-options"></div></div>
-          <div class="side-box"><h3>AI 难度</h3><div id="ai-levels"></div></div>
+          <div class="side-box" id="ai-box"><h3>AI 难度</h3><div id="ai-levels"></div></div>
           <button id="btn-battle" class="btn big">开 始 战 斗</button>
         </div>
       </div>`;
@@ -68,7 +68,7 @@ const UI = {
       grid.appendChild(card);
     });
     const mo=scr.querySelector('#mode-options');
-    [['duel','单挑对决','与选定的对手 1v1'],['conquest','征服模式','连闯 5 关 + 商店强化，通关主宰']].forEach(([id,label,desc])=>{
+    [['duel','单挑对决','与选定的对手 1v1'],['conquest','征服模式','连闯 5 关 + 商店强化，通关主宰'],['pvp','双人热座','两人轮流操作同一设备对战']].forEach(([id,label,desc])=>{
       const b=document.createElement('button');
       b.className='enemy-opt'; b.dataset.id=id;
       b.innerHTML=`${label}<div class="eo-desc">${desc}</div>`;
@@ -130,19 +130,32 @@ const UI = {
         ${def.skills.map(sk=>`<div class="hd-skill"><b>${sk.name}</b>　<span class="cost-line">${costText(sk.cost)}</span><br>${sk.desc}</div>`).join('')}
         ${rec.games?`<div class="hd-record">📜 战绩：${rec.games} 战 ${rec.wins} 胜（${Math.round(rec.wins/rec.games*100)}%）</div>`:''}`;
     }
+    /* 按模式渲染阵容槽与提示 */
+    const isPvp=App.mode==='pvp';
+    const need=isPvp?2:1;
     const slots=scr.querySelector('#team-slots');
     slots.innerHTML='';
-    for(let i=0;i<1;i++){
+    for(let i=0;i<need;i++){
       const id=App.selection[i];
       const d=document.createElement('div');
       d.className='tslot'+(id?' filled':'');
       if(id){
         const hd=getHeroDef(id);
-        d.innerHTML=`<span class="ts-emoji">${hd.emoji}</span><span>${hd.name}</span><span class="ts-pos">出战英雄</span>`;
-      } else d.innerHTML=`<span class="ts-emoji">＋</span><span>空位</span>`;
+        const pos=isPvp?(i===0?'玩家 1':'玩家 2'):'出战英雄';
+        d.innerHTML=`<span class="ts-emoji">${hd.emoji}</span><span>${hd.name}</span><span class="ts-pos">${pos}</span>`;
+      } else d.innerHTML=`<span class="ts-emoji">＋</span><span>${isPvp?'玩家 '+(i+1)+' 待选':'空位'}</span>`;
       d.addEventListener('click',()=>App.removeHero(i));
       slots.appendChild(d);
     }
+    const mh=scr.querySelector('#mode-hint');
+    if(mh){
+      mh.textContent = isPvp
+        ? (App.selection.length===0?'玩家 1 先选英雄':App.selection.length===1?'轮到玩家 2 选择':'双方便可开战！')
+        : (App.mode==='conquest'?'将连续挑战 5 关，状态全程延续':'');
+    }
+    /* 标题随模式变化 */
+    const h2=scr.querySelector('.select-left h2');
+    if(h2) h2.textContent = isPvp?'双人热座：玩家 1、玩家 2 各选 1 名英雄':(App.mode==='conquest'?'选择 1 名英雄出战（征服模式）':'选择 1 名英雄出战（1v1 单挑）');
     const ps=scr.querySelector('#profile-stats');
     if(ps){
       const dw=Profile.data.duelGames, dwin=Profile.data.duelWins;
@@ -154,9 +167,11 @@ const UI = {
       if(b.closest('#ai-levels')) b.classList.toggle('on',b.dataset.id===App.aiLevel);
     });
     const eoBox=scr.querySelector('#enemy-box');
-    if(eoBox) eoBox.classList.toggle('disabled',App.mode==='conquest');
+    if(eoBox) eoBox.classList.toggle('disabled',App.mode!=='duel');
+    const aiBox=scr.querySelector('#ai-box');
+    if(aiBox) aiBox.classList.toggle('disabled',App.mode==='pvp');
     const btn=scr.querySelector('#btn-battle');
-    if(btn) btn.disabled=App.selection.length!==1;
+    if(btn) btn.disabled=App.selection.length!==(App.mode==='pvp'?2:1);
   },
 
   /* ================= 战斗界面 ================= */
@@ -166,7 +181,7 @@ const UI = {
     scr.innerHTML=`
       <div class="battle-wrap" id="battle-root" style="--boardw:${CELL*8+4}px">
         <div class="battle-top">
-          <span class="vs">我方 vs ${st.enemyTeam.name}</span>
+          <span class="vs">${st.pvp?'玩家 1 vs 玩家 2':'我方 vs '+st.enemyTeam.name}</span>
           <span class="turninfo" id="turn-info"></span>
           <span class="gold-badge hidden" id="gold-badge"></span>
           <span class="top-btns">
@@ -190,11 +205,15 @@ const UI = {
     document.getElementById('btn-concede').addEventListener('click',()=>{
       const st2=Battle.state;
       if(st2&&!st2.over){
-        st2.over=true; st2.winner='enemy'; st2.busy=true;
+        st2.over=true;
+        st2.winner=st2.pvp?(st2.turn==='player'?'enemy':'player'):'enemy';
+        st2.busy=true;
         UI.lockInput(true); UI.syncAll();
-        Sound.play('defeat');
+        Sound.play(st2.pvp?'extra':'defeat');
+        if(typeof Profile!=='undefined') Profile.record(st2);
         setTimeout(()=>{
           if(st2.conquest&&typeof Conquest!=='undefined') Conquest.onRunLost();
+          else if(st2.pvp) UI.showResult(true, `🏆 玩家${st2.winner==='player'?1:2} 获胜（对方认输）`);
           else UI.showResult(false);
         }, 600);
       }
@@ -282,7 +301,8 @@ const UI = {
 
   buildTeamPanel(side,heroes){
     const panel=document.getElementById('panel-'+side);
-    panel.innerHTML=`<div class="panel-title">${side==='player'?'⚔ 我方队伍':'☠ 敌方队伍'}</div>`;
+    const pvpTitle=Battle.state&&Battle.state.pvp;
+    panel.innerHTML=`<div class="panel-title">${pvpTitle?(side==='player'?'玩家 1':'玩家 2'):(side==='player'?'⚔ 我方队伍':'☠ 敌方队伍')}</div>`;
     const rows=document.createElement('div');
     heroes.forEach(h=>{
       const row=document.createElement('div');
@@ -317,7 +337,8 @@ const UI = {
         const desc=document.createElement('div');
         desc.className='skill-desc';
         desc.textContent=sk.desc;
-        if(side==='player') btn.addEventListener('click',()=>Battle.doCast('player',h,i));
+        /* 双方都绑定点击；doCast 内部按当前回合校验，非本回合自动忽略 */
+        btn.addEventListener('click',()=>Battle.doCast(h.side,h,i));
         wrap.appendChild(btn); wrap.appendChild(desc);
         panel.appendChild(wrap);
         this.skillBtns.push({hero:h, idx:i, el:btn, desc});
@@ -388,7 +409,10 @@ const UI = {
 
   syncHeader(){
     const st=Battle.state; if(!st) return;
-    const txt=`回合 ${st.turnNo} · ${st.turn==='player'?'你的回合':'敌方回合'}`;
+    const who=st.pvp
+      ? (st.turn==='player'?'玩家 1 回合':'玩家 2 回合')
+      : (st.turn==='player'?'你的回合':'敌方回合');
+    const txt=`回合 ${st.turnNo} · ${who}`;
     const head=document.getElementById('board-head');
     const info=document.getElementById('turn-info');
     if(head){ head.textContent=txt; head.classList.toggle('enemy',st.turn==='enemy'); }
@@ -530,7 +554,8 @@ const UI = {
   onGemClick(g){
     if(this._suppressClick) return;   // 刚完成滑动交换，忽略其派生的 click
     const st=Battle.state;
-    if(!st||st.busy||st.over||st.turn!=='player') return;
+    if(!st||st.busy||st.over) return;
+    if(!st.pvp&&st.turn!=='player') return;   // 单挑/征服：仅玩家可操作
     /* 部分触屏环境会为一次点按派生重复 click，导致"选中又立即取消"——去重 */
     const now=Date.now();
     if(this._lastTap&&this._lastTap.gid===g.id&&now-this._lastTap.t<120) return;
