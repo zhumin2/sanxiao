@@ -141,7 +141,6 @@ const AI = {
       case 'damageFront':{ const t=Battle.front(st.teams.player); if(!t)return 0; return v*1.3+(totalHp(t)<=v?45:0); }
       case 'pierceFront':{ const t=Battle.front(st.teams.player); if(!t)return 0; return v*1.45+(t.hp<=v?50:0); }
       case 'pierceLowest':{ if(!foes.length)return 0; const t=[...foes].sort((a,b)=>a.hp-b.hp)[0]; return v*1.4+(t.hp<=v?50:0); }
-      case 'damageFront2': return v*Math.min(2,foes.length)*1.2;
       case 'aoeDamage': return v*foes.length*1.2;
       case 'assassinate':{ const t=Battle.front(st.teams.player); if(!t)return 0; return v*1.3+(totalHp(t)<=v?55:0)+6; }
       case 'berserkStrike':{ const t=Battle.front(st.teams.player); if(!t)return 0; return v*1.3-(v2||0)*0.4+(totalHp(t)<=v?45:0); }

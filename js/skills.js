@@ -10,7 +10,6 @@ const BOARD_CHANGING_FX = new Set([
 const FX = {
   /* ---- 伤害 ---- */
   damageFront(ctx,v){ const t=Battle.front(ctx.enemy); if(t) Battle.dealDamage(t,v,{}); },
-  damageFront2(ctx,v){ Battle.alive(ctx.enemy).slice(0,2).forEach(h=>Battle.dealDamage(h,v,{})); },
   pierceFront(ctx,v){ const t=Battle.front(ctx.enemy); if(t) Battle.dealDamage(t,v,{pierce:true}); },
   pierceLowest(ctx,v){
     const list=Battle.alive(ctx.enemy); if(!list.length) return;
@@ -80,11 +79,6 @@ const FX = {
   healAll(ctx,v){ Battle.alive(ctx.self).forEach(h=>Battle.heal(h,v)); },
   shieldAll(ctx,v){ Battle.alive(ctx.self).forEach(h=>Battle.addArmor(h,v)); },
   shieldHealAll(ctx,v,v2){ Battle.alive(ctx.self).forEach(h=>{ Battle.addArmor(h,v); Battle.heal(h,v2); }); },
-  reviveOrHeal(ctx,v){
-    const dead=ctx.self.find(h=>!h.alive);
-    if(dead) Battle.revive(dead);
-    else Battle.alive(ctx.self).forEach(h=>Battle.heal(h,v));
-  },
   rage(ctx,v,v2){
     if(v2) Battle.loseHp(ctx.caster,v2);
     ctx.caster.atk+=v;
