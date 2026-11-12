@@ -157,12 +157,6 @@ const AI = {
       case 'healAll':{ const miss=Math.max(0,...Battle.alive(st.teams.enemy).map(h=>h.maxHp-h.hp)); return Math.min(v,miss); }
       case 'shieldAll': return v*Battle.alive(st.teams.enemy).length*0.55;
       case 'shieldHealAll':{ const miss=Math.max(0,...Battle.alive(st.teams.enemy).map(h=>h.maxHp-h.hp)); return v*0.55*Battle.alive(st.teams.enemy).length+Math.min(v2,miss)*0.9; }
-      case 'reviveOrHeal':{
-        const dead=st.teams.enemy.find(h=>!h.alive);
-        if(dead) return 48;
-        const miss=Math.max(0,...Battle.alive(st.teams.enemy).map(h=>h.maxHp-h.hp));
-        return Math.min(v,miss);
-      }
       case 'rage': return v*9-(v2||0)*0.5;
       case 'convertCol': case 'convertRow': return 15;
       case 'destroyRandom': return v*1.6;
