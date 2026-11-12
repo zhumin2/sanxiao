@@ -202,6 +202,10 @@ const Battle = {
           else Conquest.onRunLost();
         } else if(st.pvp){
           UI.showResult(true, `🏆 玩家${st.winner==='player'?1:2} 获胜！`);
+        } else if(st.daily){
+          UI.showResult(st.winner==='player', st.winner==='player'
+            ? `📅 每日挑战完成！连续 ${Profile.data.dailyStreak} 天 · 累计 ${Profile.data.dailyClears} 次`
+            : '📅 每日挑战未完成，明天再来（棋盘每天刷新）');
         } else {
           UI.showResult(st.winner==='player');
         }
