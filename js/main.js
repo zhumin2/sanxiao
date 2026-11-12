@@ -57,6 +57,12 @@ const App = {
       this.lastMode='pvp';
       UI.showScreen('battle');
       Battle.start([defs[0]],{name:'双人热座',heroes:[defs[1].id]},this.aiLevel,{pvp:true});
+    } else if(this.mode==='daily'){
+      this.lastMode='daily';
+      const info=dailyInfo();
+      const foeDef=getHeroDef(info.foeId);
+      UI.showScreen('battle');
+      Battle.start([defs[0]],{name:'每日挑战 · '+info.mod.name,heroes:[info.foeId]},'hard',{daily:{mod:info.mod.id, seed:info.seed, foeName:foeDef.name}});
     } else {
       this.lastMode='duel';
       const team=ENEMY_TEAMS.find(t=>t.id===this.enemyTeam);

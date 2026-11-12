@@ -134,7 +134,7 @@ test/smoke.js     棋盘逻辑冒烟测试
 
 ```bash
 # 将数据 / 棋盘 / 技能与测试文件拼接后用 node 执行
-cat js/data.js js/board.js js/skills.js test/smoke.js > test/_combined.js && node test/_combined.js
+cat js/rng.js js/data.js js/board.js js/skills.js test/smoke.js > test/_combined.js && node test/_combined.js
 ```
 
 ## 已知设计取舍

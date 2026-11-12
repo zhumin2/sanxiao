@@ -6,7 +6,7 @@ let __gemId = 1;
 
 function randGemType(){
   const total = Object.values(REFILL_WEIGHTS).reduce((a,b)=>a+b,0);
-  let x = Math.random()*total;
+  let x = rand()*total;
   for (const [k,w] of Object.entries(REFILL_WEIGHTS)){ x-=w; if (x<0) return k; }
   return 'red';
 }

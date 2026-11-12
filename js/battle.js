@@ -19,8 +19,11 @@ const Battle = {
     });
     const players=playerDefs.map((d,i)=>mk(d,'player',i));
     const enemies=enemyTeam.random
-      ? [HERO_ROSTER[Math.floor(Math.random()*HERO_ROSTER.length)]].map((d,i)=>mk(d,'enemy',i))
+      ? [HERO_ROSTER[Math.floor(rand()*HERO_ROSTER.length)]].map((d,i)=>mk(d,'enemy',i))
       : enemyTeam.heroes.map((id,i)=>mk(getHeroDef(id),'enemy',i));
+
+    /* 每日挑战：先按日期种子初始化随机流，再生成棋盘，保证开局确定 */
+    if(opts.daily&&opts.daily.seed){ RNG.setSeed(opts.daily.seed); } else { RNG.clear(); }
 
     this.state={
       board:newBoard(), enemyTeam,
@@ -30,6 +33,7 @@ const Battle = {
       bossRaged:false, rageTurns:0,
       conquest:!!opts.conquest,
       pvp:!!opts.pvp,
+      daily:opts.daily||null,
       heroId:playerDefs[0]?playerDefs[0].id:null,
       foeId:enemyTeam.heroes?enemyTeam.heroes[0]:null,
     };
@@ -43,6 +47,20 @@ const Battle = {
     UI.buildBattleScreen(this.state);
     UI.log(`战斗开始：${UI.hname(this.state.teams.player[0])} vs ${this.state.pvp?UI.hname(this.state.teams.enemy[0]):enemyTeam.name}！`,'lg-sys');
     UI.log(`骷髅伤害由你方英雄的攻击力决定，只有亲和色的宝石会充能。`,'lg-sys');
+    /* 每日挑战规则生效 */
+    if(this.state.daily){
+      const rule=DAILY_RULES.find(dr=>dr.id===this.state.daily.mod);
+      if(rule) UI.log(`📅 每日挑战 · ${rule.name}：${rule.desc}`,'lg-sys');
+      if(this.state.daily.mod==='atk_up'){
+        const e0=this.state.teams.enemy[0];
+        e0.atk+=2;
+        UI.log(`${UI.hname(e0)} 攻击力 +2（强敌压境）`,'lg-sys');
+      }
+      if(this.state.daily.mod==='poison_start'){
+        this.applyStatus(this.state.teams.player[0],'poison',2);
+        this.applyStatus(this.state.teams.enemy[0],'poison',2);
+      }
+    }
     this.prepareTurn();
   },
 
@@ -95,6 +113,14 @@ const Battle = {
       if(s.shred>0){
         UI.log(`💥 ${UI.hname(h)} 护甲破损（吸收减半）`,'lg-sys');
         s.shred--;
+      }
+    }
+    /* 每日挑战 · 灼烧日：当前回合方前排额外掉血 */
+    if(st.daily&&st.daily.mod==='burn_all'){
+      const f=this.front(this.teamArr(side));
+      if(f&&f.alive){
+        UI.log(`🔥 灼烧日：${UI.hname(f)} 受到 3 点真实伤害`,'lg-dmg');
+        this.loseHp(f,3);
       }
     }
     UI.syncAll();
@@ -161,7 +187,15 @@ const Battle = {
       st.busy=true; UI.lockInput(true); UI.syncAll();
       UI.log(st.pvp?`玩家${st.winner==='player'?1:2} 的对手全灭！`:(st.winner==='player'?'敌方全灭——胜利！':'我方全灭——战败…'),'lg-sys');
       Sound.play(st.pvp?'extra':(st.winner==='player'?'victory':'defeat'));
-      if(typeof Profile!=='undefined') Profile.record(st);
+      if(typeof Profile!=='undefined'){
+        Profile.record(st);
+        if(st.winner==='player'&&st.foeId==='zhuzai') Profile.count('bossKills');
+        if(st.daily&&st.winner==='player') Profile.dailyWin();
+        Profile.checkAchievements().forEach(function(a){
+          UI.banner('🏆 成就解锁：'+a.name);
+          UI.log('🏆 成就解锁：'+a.name+' — '+a.desc,'lg-heal');
+        });
+      }
       setTimeout(()=>{
         if(st.conquest&&typeof Conquest!=='undefined'){
           if(st.winner==='player') Conquest.onStageWon();
@@ -282,7 +316,7 @@ const Battle = {
         const g=st.board[r][c]; if(g&&!g.doom) cands.push(g);
       }
       for(let i=0;i<totals.doom&&cands.length;i++){
-        const idx=Math.floor(Math.random()*cands.length);
+        const idx=Math.floor(rand()*cands.length);
         const g=cands.splice(idx,1)[0];
         g.type='skull'; g.doom=true; UI.updateGemEl(g);
         UI.burst([[g.r,g.c]]);
@@ -293,6 +327,7 @@ const Battle = {
 
     /* 骷髅伤害 */
     if(totals.skullDmg>0){
+      if(st.daily&&st.daily.mod==='skull_fury') totals.skullDmg=Math.round(totals.skullDmg*1.5);   // 骷髅狂潮
       const t=this.front(this.teamArr(this.other(side)));
       if(t){
         UI.banner('💀 骷髅攻击！');
@@ -311,6 +346,11 @@ const Battle = {
     if(st.conquest&&totals.mana.yellow>0&&side==='player'){
       Conquest.addGold(totals.mana.yellow);
       UI.float(st.teams.player[0], `+${totals.mana.yellow}💰`, 'gold');
+    }
+    /* 成就计数器 */
+    if(typeof Profile!=='undefined'){
+      if(totals.extraTurn) Profile.count('extraTurns');
+      for(let i=0;i<totals.doom;i++) Profile.count('dooms');
     }
     UI.syncAll();
     return totals;
@@ -341,6 +381,8 @@ const Battle = {
 
   /* ---------- 数值操作 ---------- */
   gainColorMana(side,color,amount){
+    const st=this.state;
+    if(st&&st.daily.mod==='mana_tide') amount=Math.ceil(amount*1.5);   // 法力潮汐
     let left=amount;
     for(const h of this.teamArr(side)){
       if(!h.alive||left<=0) continue;
@@ -470,7 +512,7 @@ const Battle = {
   /* ---------- 棋盘变更（技能用） ---------- */
   convertLine(kind,color){
     const st=this.state;
-    const idx=Math.floor(Math.random()*(kind==='row'?ROWS:COLS));
+    const idx=Math.floor(rand()*(kind==='row'?ROWS:COLS));
     let changed=0;
     for(let i=0;i<(kind==='row'?COLS:ROWS);i++){
       const r=kind==='row'?idx:i;
@@ -488,7 +530,7 @@ const Battle = {
       const g=st.board[r][c];
       if(g&&!g.doom&&g.type!==color) cands.push(g);
     }
-    for(let i=cands.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [cands[i],cands[j]]=[cands[j],cands[i]]; }
+    for(let i=cands.length-1;i>0;i--){ const j=Math.floor(rand()*(i+1)); [cands[i],cands[j]]=[cands[j],cands[i]]; }
     let changed=0;
     for(const g of cands.slice(0,n)){ g.type=color; changed++; UI.updateGemEl(g); }
     if(changed) UI.log(`${changed} 颗宝石变为${GEMS[color].name}`,'lg-sys');
@@ -501,7 +543,7 @@ const Battle = {
       const g=st.board[r][c];
       if(g&&!g.doom) cands.push(g);
     }
-    for(let i=cands.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [cands[i],cands[j]]=[cands[j],cands[i]]; }
+    for(let i=cands.length-1;i>0;i--){ const j=Math.floor(rand()*(i+1)); [cands[i],cands[j]]=[cands[j],cands[i]]; }
     let skulls=0;
     for(const g of cands.slice(0,n)){
       if(g.type==='skull') skulls++;
@@ -517,7 +559,7 @@ const Battle = {
       const g=st.board[r][c];
       if(g&&!g.doom&&g.type!=='skull') cands.push(g);
     }
-    for(let i=cands.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [cands[i],cands[j]]=[cands[j],cands[i]]; }
+    for(let i=cands.length-1;i>0;i--){ const j=Math.floor(rand()*(i+1)); [cands[i],cands[j]]=[cands[j],cands[i]]; }
     let changed=0;
     for(const g of cands.slice(0,n)){ g.type='skull'; changed++; UI.updateGemEl(g); }
     if(changed) UI.log(`${changed} 颗宝石变为骷髅！`,'lg-sys');

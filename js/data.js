@@ -166,3 +166,27 @@ const ENEMY_TEAMS = [
 function getHeroDef(id){
   return HERO_ROSTER.find(h=>h.id===id) || ENEMY_ROSTER.find(h=>h.id===id) || (id==='zhuzai' ? BOSS_HERO : null);
 }
+
+/* ===== 每日挑战：规则池 / 对手池 / 日期轮换 ===== */
+const DAILY_RULES = [
+  { id:'burn_all',     name:'灼烧日',   desc:'双方每回合开始受到 3 点真实伤害' },
+  { id:'mana_tide',    name:'法力潮汐', desc:'双方所有法力获取 +50%' },
+  { id:'poison_start', name:'毒瘴弥漫', desc:'双方开局各携带 2 层中毒' },
+  { id:'skull_fury',   name:'骷髅狂潮', desc:'双方骷髅伤害 ×1.5' },
+  { id:'atk_up',       name:'强敌压境', desc:'对手攻击力 +2' },
+];
+const DAILY_FOE_POOL = [
+  'yase','daji','luban','caiwenji','libai','chengyaojin','diaochan','houyi',
+  'anqila','zhaojun','bianque','lvbu','baiqi','lanling','zhongkui','donghuang',
+];
+
+/* 当日信息：以本地日期为种子，规则与对手每天轮换 */
+function dailyInfo(){
+  const d = new Date();
+  const seed = d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
+  return {
+    seed: seed,
+    mod: DAILY_RULES[seed % DAILY_RULES.length],
+    foeId: DAILY_FOE_POOL[seed % DAILY_FOE_POOL.length],
+  };
+}

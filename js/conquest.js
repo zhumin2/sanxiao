@@ -93,7 +93,7 @@ const Conquest = {
     const nextLabel=stage.name+(stage.foeName?`（${stage.foeName}）`:'');
     /* 随机 4 件商品（洗牌取样） */
     const pool=SHOP_POOL.slice();
-    for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+    for(let i=pool.length-1;i>0;i--){ const j=Math.floor(rand()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
     const offers=pool.slice(0,4);
 
     const scr=document.getElementById('screen-shop');

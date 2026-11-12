@@ -45,6 +45,7 @@ const UI = {
               <button id="nick-save" class="btn small">保存</button>
             </div>
             <div class="profile-stats" id="profile-stats"></div>
+            <div class="ach-row" id="ach-row"></div>
           </div>
           <div class="side-box" id="hero-detail"><div class="hint">点击左侧英雄查看详情</div></div>
           <div class="side-box"><h3>出战阵容</h3><div id="team-slots"></div><div class="hint" id="mode-hint"></div></div>
@@ -68,7 +69,7 @@ const UI = {
       grid.appendChild(card);
     });
     const mo=scr.querySelector('#mode-options');
-    [['duel','单挑对决','与选定的对手 1v1'],['conquest','征服模式','连闯 5 关 + 商店强化，通关主宰'],['pvp','双人热座','两人轮流操作同一设备对战']].forEach(([id,label,desc])=>{
+    [['duel','单挑对决','与选定的对手 1v1'],['conquest','征服模式','连闯 5 关 + 商店强化，通关主宰'],['daily','每日挑战','日期种子固定局面 + 每日规则'],['pvp','双人热座','两人轮流操作同一设备对战']].forEach(([id,label,desc])=>{
       const b=document.createElement('button');
       b.className='enemy-opt'; b.dataset.id=id;
       b.innerHTML=`${label}<div class="eo-desc">${desc}</div>`;
@@ -149,17 +150,26 @@ const UI = {
     }
     const mh=scr.querySelector('#mode-hint');
     if(mh){
+      const di=dailyInfo();
       mh.textContent = isPvp
         ? (App.selection.length===0?'玩家 1 先选英雄':App.selection.length===1?'轮到玩家 2 选择':'双方便可开战！')
-        : (App.mode==='conquest'?'将连续挑战 5 关，状态全程延续':'');
+        : (App.mode==='conquest'?'将连续挑战 5 关，状态全程延续'
+          :App.mode==='daily'?`今日：${di.mod.name} — ${di.mod.desc} ｜ 对手：${getHeroDef(di.foeId).name}`:'');
     }
     /* 标题随模式变化 */
     const h2=scr.querySelector('.select-left h2');
-    if(h2) h2.textContent = isPvp?'双人热座：玩家 1、玩家 2 各选 1 名英雄':(App.mode==='conquest'?'选择 1 名英雄出战（征服模式）':'选择 1 名英雄出战（1v1 单挑）');
+    if(h2) h2.textContent = isPvp?'双人热座：玩家 1、玩家 2 各选 1 名英雄'
+      :(App.mode==='conquest'?'选择 1 名英雄出战（征服模式）'
+      :(App.mode==='daily'?'每日挑战：选择 1 名英雄出战':'选择 1 名英雄出战（1v1 单挑）'));
     const ps=scr.querySelector('#profile-stats');
     if(ps){
       const dw=Profile.data.duelGames, dwin=Profile.data.duelWins;
-      ps.innerHTML=`👤 ${Profile.data.name}<br>⚔ 单挑 ${dw} 战 ${dwin} 胜${dw?`（${Math.round(dwin/dw*100)}%）`:''}<br>${Profile.conquestText()}`;
+      const unlocked=ACHIEVEMENTS.filter(a=>Profile.data.achievements[a.id]).length;
+      ps.innerHTML=`👤 ${Profile.data.name}<br>⚔ 单挑 ${dw} 战 ${dwin} 胜${dw?`（${Math.round(dwin/dw*100)}%）`:''}<br>${Profile.conquestText()}<br>${Profile.dailyText()}<br>🏆 成就 ${unlocked}/${ACHIEVEMENTS.length}`;
+    }
+    const achRow=scr.querySelector('#ach-row');
+    if(achRow){
+      achRow.innerHTML=ACHIEVEMENTS.map(a=>`<span class="ach-badge${Profile.data.achievements[a.id]?' unlocked':''}" title="${a.name}：${a.desc}">${a.icon}</span>`).join('');
     }
     scr.querySelectorAll('.enemy-opt').forEach(b=>{
       if(b.closest('#mode-options')) b.classList.toggle('on',b.dataset.id===App.mode);
@@ -169,7 +179,7 @@ const UI = {
     const eoBox=scr.querySelector('#enemy-box');
     if(eoBox) eoBox.classList.toggle('disabled',App.mode!=='duel');
     const aiBox=scr.querySelector('#ai-box');
-    if(aiBox) aiBox.classList.toggle('disabled',App.mode==='pvp');
+    if(aiBox) aiBox.classList.toggle('disabled',App.mode==='pvp'||App.mode==='daily');
     const btn=scr.querySelector('#btn-battle');
     if(btn) btn.disabled=App.selection.length!==(App.mode==='pvp'?2:1);
   },

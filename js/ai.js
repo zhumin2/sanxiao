@@ -61,7 +61,7 @@ const AI = {
           return;
         }
         if(!moves.length){ Battle.prepareTurn(); return; }
-        const pick=moves[Math.floor(Math.random()*moves.length)];
+        const pick=moves[Math.floor(rand()*moves.length)];
         const [[r1,c1],[r2,c2]]=pick.swap;
         await Battle.doSwap(side, st.board[r1][c1], st.board[r2][c2]);
         return;
@@ -93,7 +93,7 @@ const AI = {
 
   noise(){
     const lvl=(Battle.state&&Battle.state.aiLevel)||'normal';
-    return lvl==='hard' ? 0.96+Math.random()*0.08 : 0.88+Math.random()*0.24;
+    return lvl==='hard' ? 0.96+rand()*0.08 : 0.88+rand()*0.24;
   },
 
   enumerateMoves(board, perSkull){
@@ -184,7 +184,7 @@ const AI = {
     if(!list.length) return null;
     if(list.length===1) return list[0];
     const w=[0.72,0.18,0.10];
-    const x=Math.random(); let acc=0;
+    const x=rand(); let acc=0;
     for(let i=0;i<list.length&&i<3;i++){ acc+=w[i]; if(x<acc) return list[i]; }
     return list[0];
   },
